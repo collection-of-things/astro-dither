@@ -65,6 +65,20 @@ describe("parseOrderedDither", () => {
 });
 
 describe("effects registry", () => {
+  it("every effect param has a slider range that covers its default", () => {
+    for (const [name, def] of Object.entries(effects)) {
+      for (const [key, value] of Object.entries(def.params)) {
+        const range = def.ranges?.[key];
+        expect(range, `${name}.${key}`).toBeDefined();
+        if (range === undefined) continue;
+        expect(range.min, `${name}.${key}`).toBeLessThan(range.max);
+        expect(range.step, `${name}.${key}`).toBeGreaterThan(0);
+        expect(value, `${name}.${key} default`).toBeGreaterThanOrEqual(range.min);
+        expect(value, `${name}.${key} default`).toBeLessThanOrEqual(range.max);
+      }
+    }
+  });
+
   it("every effect has 2-8 valid palette colours and a field() definition", () => {
     for (const [name, def] of Object.entries(effects)) {
       expect(def.palette.length, name).toBeGreaterThanOrEqual(2);

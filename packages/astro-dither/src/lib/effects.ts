@@ -16,6 +16,8 @@ export interface EffectDefinition {
   speed: number;
   /** True if the field samples `u_image` (globe). */
   usesImage?: boolean;
+  /** Slider range per param, for controls UIs. Missing entries fall back to 0..2×default (or 0..1 when the default is under 1). */
+  ranges?: Partial<Record<string, { min: number; max: number; step: number }>>;
 }
 
 const GRADIENT_FIELD = /* glsl */ `
@@ -314,6 +316,15 @@ export const effects = {
   gradient: {
     field: GRADIENT_FIELD,
     params: { mode: 1, angle: 180, cx: 0.5, cy: 0, radius: 1.05, from: 1, to: 0 },
+    ranges: {
+      mode: { min: 0, max: 3, step: 1 },
+      angle: { min: 0, max: 360, step: 5 },
+      cx: { min: 0, max: 1, step: 0.05 },
+      cy: { min: 0, max: 1, step: 0.05 },
+      radius: { min: 0.1, max: 2, step: 0.05 },
+      from: { min: 0, max: 1, step: 0.05 },
+      to: { min: 0, max: 1, step: 0.05 },
+    },
     stillTime: 0,
     palette: ["#070707", "#e11d24"],
     speed: 0,
@@ -321,6 +332,12 @@ export const effects = {
   glow: {
     field: GLOW_FIELD,
     params: { cx: 0.5, cy: 0.55, radius: 0.6, power: 2 },
+    ranges: {
+      cx: { min: 0, max: 1, step: 0.05 },
+      cy: { min: 0, max: 1, step: 0.05 },
+      radius: { min: 0.05, max: 1.5, step: 0.05 },
+      power: { min: 0.5, max: 6, step: 0.1 },
+    },
     stillTime: 2,
     palette: ["#040208", "#2a0f4a", "#8f2f8f", "#ffc4a3"],
     speed: 1,
@@ -328,6 +345,10 @@ export const effects = {
   mesh: {
     field: MESH_FIELD,
     params: { size: 0.42, sway: 0.15 },
+    ranges: {
+      size: { min: 0.1, max: 1, step: 0.02 },
+      sway: { min: 0, max: 0.5, step: 0.01 },
+    },
     stillTime: 3,
     palette: ["#0a0018", "#3b0ca3", "#0ea5c9", "#7ddb52", "#f7e38b"],
     speed: 1,
@@ -351,6 +372,23 @@ export const effects = {
       direction: 1,
       mask: 0,
     },
+    ranges: {
+      curtains: { min: 1, max: 6, step: 1 },
+      height: { min: 0, max: 0.9, step: 0.01 },
+      spread: { min: 0, max: 0.3, step: 0.01 },
+      sway: { min: 0, max: 3, step: 0.1 },
+      turbulence: { min: 0, max: 2, step: 0.1 },
+      rays: { min: 2, max: 20, step: 1 },
+      length: { min: 0, max: 1, step: 0.05 },
+      glow: { min: 0, max: 2, step: 0.1 },
+      intensity: { min: 0, max: 1, step: 0.05 },
+      shimmer: { min: 0, max: 1, step: 0.05 },
+      scale: { min: 0.2, max: 3, step: 0.1 },
+      tilt: { min: -45, max: 45, step: 1 },
+      drift: { min: -2, max: 2, step: 0.1 },
+      direction: { min: -1, max: 1, step: 2 },
+      mask: { min: 0, max: 3, step: 1 },
+    },
     stillTime: 6,
     palette: ["#02060d", "#061a33", "#0b4f99", "#1f8fff", "#d6efff"],
     speed: 1,
@@ -358,6 +396,11 @@ export const effects = {
   noise: {
     field: NOISE_FIELD,
     params: { scale: 2.5, warp: 1.5, gain: 1.2 },
+    ranges: {
+      scale: { min: 0.5, max: 8, step: 0.1 },
+      warp: { min: 0, max: 4, step: 0.1 },
+      gain: { min: 0.2, max: 3, step: 0.1 },
+    },
     stillTime: 4,
     palette: ["#000000", "#101030", "#38406b", "#9fb2d8"],
     speed: 1,
@@ -365,6 +408,10 @@ export const effects = {
   waves: {
     field: WAVES_FIELD,
     params: { horizon: 0.62, gain: 1 },
+    ranges: {
+      horizon: { min: 0.2, max: 0.9, step: 0.01 },
+      gain: { min: 0.2, max: 2, step: 0.05 },
+    },
     stillTime: 5,
     palette: ["#000208", "#07294d", "#0f6b8f", "#5fd4c9", "#d8fff4"],
     speed: 1,
@@ -372,6 +419,7 @@ export const effects = {
   plasma: {
     field: PLASMA_FIELD,
     params: { scale: 2 },
+    ranges: { scale: { min: 0.5, max: 6, step: 0.1 } },
     stillTime: 5,
     palette: ["#0b0014", "#4a0d77", "#c72a92", "#ff8c4a", "#ffe6a8"],
     speed: 1,
@@ -379,6 +427,11 @@ export const effects = {
   beams: {
     field: BEAMS_FIELD,
     params: { cx: 0.5, cy: 1.15, fade: 1.6 },
+    ranges: {
+      cx: { min: 0, max: 1, step: 0.01 },
+      cy: { min: 0, max: 2, step: 0.05 },
+      fade: { min: 0.2, max: 5, step: 0.1 },
+    },
     stillTime: 4,
     palette: ["#000000", "#0d2138", "#2a6ba0", "#bfe3ff"],
     speed: 1,
@@ -386,6 +439,10 @@ export const effects = {
   silk: {
     field: SILK_FIELD,
     params: { sharp: 3, warp: 5 },
+    ranges: {
+      sharp: { min: 1, max: 8, step: 0.5 },
+      warp: { min: 0, max: 10, step: 0.5 },
+    },
     stillTime: 4,
     palette: ["#0a0714", "#312a56", "#7d6fb8", "#e8e3ff"],
     speed: 1,
@@ -393,6 +450,11 @@ export const effects = {
   smoke: {
     field: SMOKE_FIELD,
     params: { scale: 3, rise: 0.15, gain: 1.2 },
+    ranges: {
+      scale: { min: 1, max: 8, step: 0.1 },
+      rise: { min: 0, max: 0.6, step: 0.05 },
+      gain: { min: 0.2, max: 3, step: 0.1 },
+    },
     stillTime: 5,
     palette: ["#000000", "#151a1f", "#3c4750", "#8ea4b5", "#dce9f2"],
     speed: 1,
@@ -400,6 +462,10 @@ export const effects = {
   contours: {
     field: CONTOURS_FIELD,
     params: { scale: 2, lines: 10 },
+    ranges: {
+      scale: { min: 0.5, max: 6, step: 0.1 },
+      lines: { min: 2, max: 30, step: 1 },
+    },
     stillTime: 5,
     palette: ["#04140b", "#0d3a23", "#1f7a4a", "#5fbf7a", "#d9ffd0"],
     speed: 1,
@@ -407,6 +473,7 @@ export const effects = {
   ripples: {
     field: RIPPLES_FIELD,
     params: { freq: 28 },
+    ranges: { freq: { min: 5, max: 60, step: 1 } },
     stillTime: 4,
     palette: ["#001018", "#0b3a4d", "#1d7d96", "#8fd8e8", "#eaffff"],
     speed: 1,
@@ -414,6 +481,7 @@ export const effects = {
   metaballs: {
     field: METABALLS_FIELD,
     params: { size: 0.14 },
+    ranges: { size: { min: 0.05, max: 0.4, step: 0.01 } },
     stillTime: 4,
     palette: ["#000000", "#2b0a3d", "#8e2bd8", "#e0aaff"],
     speed: 1,
@@ -421,6 +489,10 @@ export const effects = {
   tunnel: {
     field: TUNNEL_FIELD,
     params: { twist: 3, spokes: 4 },
+    ranges: {
+      twist: { min: 0, max: 12, step: 0.5 },
+      spokes: { min: 0, max: 12, step: 1 },
+    },
     stillTime: 4,
     palette: ["#020610", "#123a6b", "#2a7fd4", "#9fd8ff"],
     speed: 1,
@@ -435,6 +507,7 @@ export const effects = {
   starfield: {
     field: STARFIELD_FIELD,
     params: { gain: 1.2 },
+    ranges: { gain: { min: 0.2, max: 3, step: 0.1 } },
     stillTime: 4,
     palette: ["#000000", "#101a33", "#3d5a99", "#cdd9ff", "#ffffff"],
     speed: 1,
@@ -442,6 +515,7 @@ export const effects = {
   eclipse: {
     field: ECLIPSE_FIELD,
     params: { radius: 0.22 },
+    ranges: { radius: { min: 0.05, max: 0.45, step: 0.01 } },
     stillTime: 4,
     palette: ["#000000", "#1a0f2e", "#6b3fa0", "#ffb36b", "#fff3d6"],
     speed: 1,
@@ -449,6 +523,10 @@ export const effects = {
   globe: {
     field: GLOBE_FIELD,
     params: { lat: 20, lon: 48 },
+    ranges: {
+      lat: { min: -90, max: 90, step: 1 },
+      lon: { min: -180, max: 180, step: 1 },
+    },
     stillTime: 0,
     palette: ["transparent", "#f4f1ea"],
     speed: 0,

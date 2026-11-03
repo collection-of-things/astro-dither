@@ -1,0 +1,155 @@
+---
+import DocsLayout from "../../../layouts/DocsLayout.astro";
+import DocsDemo from "../../../components/docs/DocsDemo.astro";
+import Snippet from "../../../components/ui/Snippet.astro";
+import CopyButton from "../../../components/ui/CopyButton.astro";
+import { Code } from "astro:components";
+import { DitherEffect, DitherGlobe } from "astro-dither";
+import { effects } from "astro-dither/effects";
+import type { EffectDefinition } from "astro-dither/effects";
+import { EFFECTS, effectParamRows, SHARED_PROP_ROWS } from "../../../docs/registry";
+import { inline, usageImport } from "../../../docs/format";
+import type { ControlSpec } from "../../../docs/components";
+
+export function getStaticPaths() {
+  return EFFECTS.map((doc) => ({ params: { slug: doc.slug }, props: { doc } }));
+}
+
+const { doc } = Astro.props;
+const def: EffectDefinition = effects[doc.slug];
+const href = `/docs/effects/${doc.slug}`;
+
+const seed: Record<string, unknown> = {
+  effect: doc.slug,
+  params: { ...def.params },
+  palette: [...def.palette],
+  cell: 2,
+  matrix: 8,
+  speed: def.speed,
+};
+
+const paramControls: ControlSpec[] = Object.entries(def.params).map(([key, value]) => {
+  const r = def.ranges?.[key];
+  return r
+    ? { kind: "slider", key, label: key, min: r.min, max: r.max, step: r.step, param: true }
+    : { kind: "slider", key, label: key, min: 0, max: value <= 1 ? 1 : value * 2, step: value <= 1 ? 0.01 : 0.1, param: true };
+});
+
+const exampleSeed = (ex: (typeof doc.examples)[number]) => {
+  const s: Record<string, unknown> = { ...seed, params: { ...def.params, ...ex.params } };
+  if (ex.palette) s.palette = [...ex.palette];
+  if (ex.cell !== undefined) s.cell = ex.cell;
+  if (ex.matrix !== undefined) s.matrix = ex.matrix;
+  if (ex.speed !== undefined) s.speed = ex.speed;
+  return s;
+};
+
+const toc = [
+  { slug: "preview", text: "Preview", depth: 2 },
+  { slug: "installation", text: "Installation", depth: 2 },
+  { slug: "usage", text: "Usage", depth: 2 },
+  { slug: "examples", text: "Examples", depth: 2 },
+  { slug: "props", text: "Props", depth: 2 },
+  { slug: "notes", text: "Notes", depth: 2 },
+];
+
+const propRows = [...effectParamRows(doc.slug), ...SHARED_PROP_ROWS];
+---
+
+<DocsLayout title={doc.title} description={doc.description} href={href} toc={toc}>
+  <h2 id="preview">Preview</h2>
+  <DocsDemo
+    element="dither-surface"
+    seed={seed}
+    tpl="<DitherEffect {props} />"
+    controls={paramControls}
+    palettes
+    matrix
+    cell
+    speed
+    animate
+  >
+    {doc.slug === "globe" ? <DitherGlobe /> : <DitherEffect effect={doc.slug} />}
+  </DocsDemo>
+
+  <h2 id="installation">Installation</h2>
+  <Snippet
+    tabs={[
+      { label: "pnpm", code: "pnpm add astro-dither" },
+      { label: "npm", code: "npm i astro-dither" },
+      { label: "bun", code: "bun add astro-dither" },
+    ]}
+    defaultTab="pnpm"
+  />
+  <p class="alt-install">
+    Or copy the source into your project: <code>npx astro-dither add effect</code>
+    <CopyButton value="npx astro-dither add effect" size="sm" label="Copy source command" />
+  </p>
+
+  <h2 id="usage">Usage</h2>
+  <Code code={`---\nimport { ${usageImport(doc.usage)} } from "astro-dither";\n---\n\n${doc.usage}`} lang="astro" theme="github-dark-dimmed" />
+  <p set:html={inline(doc.intro)}></p>
+  <p>The props group like this:</p>
+  <p set:html={inline(doc.propGroups)}></p>
+
+  <h2 id="examples">Examples</h2>
+  {
+    doc.examples.map((ex) => (
+      <>
+        <h3>{ex.title}</h3>
+        <p set:html={inline(ex.sentence)}></p>
+        <DocsDemo
+          element="dither-surface"
+          seed={exampleSeed(ex)}
+          tpl="<DitherEffect {props} />"
+        >
+          <dither-surface data-dither={JSON.stringify(exampleSeed(ex))} aria-hidden="true" />
+        </DocsDemo>
+      </>
+    ))
+  }
+
+  <h2 id="props">Props</h2>
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr><th>Prop</th><th>Type</th><th>Default</th><th>Description</th></tr>
+      </thead>
+      <tbody>
+        {propRows.map((r) => (
+          <tr>
+            <td><code>{r.name}</code></td>
+            <td><code>{r.type}</code></td>
+            <td>{r.def}</td>
+            <td set:html={inline(r.desc)}></td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  </div>
+
+  <h2 id="notes">Notes</h2>
+  <ul>
+    <li>Decorative and <code>aria-hidden</code>. Put real text on top of it, not inside it.</li>
+    <li>With reduced motion it draws one still frame at {def.stillTime}s and stops.</li>
+    <li>It pauses when scrolled out of view or when the tab is hidden.</li>
+    <li>It shares one WebGL context with every other ordered effect on the page.</li>
+  </ul>
+</DocsLayout>
+
+<style>
+  .alt-install {
+    margin-top: 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+    font-size: 14px;
+    color: var(--muted);
+  }
+  .alt-install code {
+    font-family: "Geist Mono", ui-monospace, monospace;
+    font-size: 13px;
+    color: var(--ink);
+  }
+</style>

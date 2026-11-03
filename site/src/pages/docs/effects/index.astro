@@ -1,0 +1,93 @@
+---
+import DocsLayout from "../../../layouts/DocsLayout.astro";
+import { DitherEffect, DitherGlobe } from "astro-dither";
+import { EFFECTS, EFFECT_GROUP_ORDER } from "../../../docs/registry";
+---
+
+<DocsLayout
+  title="Effects"
+  description="All 18 effects in the registry, live. Each links to its own page."
+  href="/docs/effects"
+  md="/docs/effects.md"
+>
+  {
+    EFFECT_GROUP_ORDER.map((group) => (
+      <>
+        <h2>{group}</h2>
+        <div class="catalog">
+          {EFFECTS.filter((e) => e.group === group).map((e) => (
+            <a class="cat-card" href={`/docs/effects/${e.slug}`}>
+              <span class="cat-vis">
+                {e.slug === "globe" ? (
+                  <DitherGlobe />
+                ) : (
+                  <DitherEffect effect={e.slug} />
+                )}
+              </span>
+              <span class="cat-cap">
+                <span class="cat-name">{e.title}</span>
+                <span class="cat-desc">{e.description}</span>
+              </span>
+            </a>
+          ))}
+        </div>
+      </>
+    ))
+  }
+</DocsLayout>
+
+<style>
+  .catalog {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 16px;
+    margin-bottom: 32px;
+  }
+  .cat-card {
+    display: block;
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    background: var(--card);
+    overflow: hidden;
+    text-decoration: none;
+    transition: border-color var(--t-hover) ease;
+  }
+  .cat-card:hover {
+    border-color: #262a31;
+  }
+  .cat-vis {
+    position: relative;
+    display: block;
+    aspect-ratio: 16 / 10;
+    overflow: hidden;
+    padding: 10px;
+  }
+  .cat-vis > * {
+    width: 100%;
+    height: 100%;
+    border-radius: 8px;
+    overflow: hidden;
+    display: block;
+  }
+  .cat-cap {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    padding: 10px 14px;
+    border-top: 1px solid var(--line);
+  }
+  .cat-name {
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--ink);
+  }
+  .cat-desc {
+    font-size: 12px;
+    color: var(--muted);
+  }
+  @media (max-width: 640px) {
+    .catalog {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>

@@ -4,7 +4,7 @@
 
 Animated dither backgrounds, gradients and image effects for Astro. No React. The shapes and image filter use [Paper Shaders](https://shaders.paper.design)' vanilla package; gradients and the other effects run on a small custom Bayer engine that shares one WebGL context.
 
-[Website](https://astro-dither.vercel.app) · [GitHub](https://github.com/screen-gd/astro-dither)
+[Website](https://astro-dither.vercel.app) · [Docs](https://astro-dither.vercel.app/docs) · [GitHub](https://github.com/screen-gd/astro-dither)
 
 ## Install
 

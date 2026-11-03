@@ -1,0 +1,71 @@
+import type { PropRow } from "./registry";
+import { SHARED_PROP_ROWS } from "./registry";
+
+const SHARED_EFFECT = SHARED_PROP_ROWS;
+
+export const SHARED = {
+  dither: [
+    { name: "shape", type: '"sphere" | "warp" | "wave" | "ripple" | "swirl" | "dots"', def: '"sphere"', desc: "The Paper dithering shape." },
+    { name: "type", type: '"random" | "2x2" | "4x4" | "8x8"', def: '"4x4"', desc: "The threshold pattern." },
+    { name: "size", type: "number", def: "2", desc: "Pattern scale." },
+    { name: "speed", type: "number", def: "0.4", desc: "Animation speed." },
+    { name: "scale", type: "number", def: "1", desc: "Overall zoom." },
+    { name: "colorBack", type: "string", def: '"#000000"', desc: "Paper colour." },
+    { name: "colorFront", type: "string", def: '"#00b2ff"', desc: "Ink colour." },
+    { name: "colorHighlight", type: "string", def: "colorFront", desc: "Bright edge colour." },
+    { name: "pxSize", type: "number", def: "2", desc: "Dither cell size in pixels." },
+    { name: "class", type: "string", def: "undefined", desc: "Classes on the element." },
+  ] as PropRow[],
+  image: [
+    { name: "src", type: "string | ImageMetadata", def: "required", desc: "The photo to dither." },
+    { name: "alt", type: "string", def: "required", desc: "Alt text kept on the img." },
+    { name: "type", type: '"random" | "2x2" | "4x4" | "8x8"', def: '"8x8"', desc: "The threshold pattern." },
+    { name: "size", type: "number", def: "2", desc: "Dither cell size in pixels." },
+    { name: "colorBack", type: "string", def: '"#000000"', desc: "Paper colour." },
+    { name: "colorFront", type: "string", def: '"#00b2ff"', desc: "Ink colour." },
+    { name: "colorHighlight", type: "string", def: '"#d6efff"', desc: "Bright edge colour." },
+    { name: "colorSteps", type: "number", def: "2", desc: "Palette steps the photo quantizes to." },
+    { name: "originalColors", type: "boolean", def: "false", desc: "Keep the photo's own colours." },
+    { name: "inverted", type: "boolean", def: "false", desc: "Invert the mapping." },
+    { name: "speed", type: "number", def: "1", desc: "Animation speed, 0 for a still." },
+    { name: "class", type: "string", def: "undefined", desc: "Classes on the element." },
+  ] as PropRow[],
+  gradient: [
+    { name: "mode", type: '"linear" | "radial" | "conic" | "wave"', def: '"linear"', desc: "The ramp shape." },
+    { name: "angle", type: "number", def: "180", desc: "Ramp direction in degrees." },
+    { name: "cx", type: "number", def: "0.5", desc: "Centre x for radial/conic." },
+    { name: "cy", type: "number", def: "0", desc: "Centre y for radial/conic." },
+    { name: "radius", type: "number", def: "1.05", desc: "Radial reach." },
+    ...SHARED_EFFECT,
+  ],
+  aurora: [
+    { name: "curtains", type: "number", def: "3", desc: "How many curtains. Each hangs higher and dimmer." },
+    { name: "height", type: "number", def: "0.42", desc: "Where the lowest bright edge hangs, 0 to 1." },
+    { name: "spread", type: "number", def: "0.05", desc: "Vertical gap between curtains." },
+    { name: "sway", type: "number", def: "1", desc: "How far the edges fold." },
+    { name: "turbulence", type: "number", def: "0.6", desc: "Fine ripples along each edge." },
+    { name: "rays", type: "number", def: "8", desc: "How many rays fit across." },
+    { name: "length", type: "number", def: "0.45", desc: "How far the rays reach up." },
+    { name: "glow", type: "number", def: "0.9", desc: "Brightness of the line along each edge." },
+    { name: "intensity", type: "number", def: "0.95", desc: "Overall curtain brightness." },
+    { name: "shimmer", type: "number", def: "0.2", desc: "A slow brightness ripple." },
+    { name: "scale", type: "number", def: "1", desc: "Horizontal zoom." },
+    { name: "tilt", type: "number", def: "0", desc: "Tilt in degrees." },
+    { name: "drift", type: "number", def: "0", desc: "Sideways travel." },
+    { name: "direction", type: "1 | -1", def: "1", desc: "-1 hangs the rays from a bright top edge." },
+    { name: "mask", type: "number", def: "0", desc: "0 none, 1 fades top, 2 fades bottom, 3 fades sides." },
+    ...SHARED_EFFECT,
+  ],
+  effect: [
+    { name: "effect", type: "EffectName", def: "required", desc: "One of the 18 registry names." },
+    { name: "params", type: "Record<string, number>", def: "{}", desc: "The effect's own settings, typed per effect." },
+    ...SHARED_EFFECT,
+    { name: "src", type: "string", def: "undefined", desc: "Image texture for effects that sample one (globe)." },
+  ],
+  globe: [
+    { name: "lat", type: "number", def: "20", desc: "Latitude facing the viewer." },
+    { name: "lon", type: "number", def: "48", desc: "Longitude facing the viewer." },
+    { name: "src", type: "string | ImageMetadata", def: "bundled land mask", desc: "Override the mask." },
+    ...SHARED_EFFECT,
+  ],
+};

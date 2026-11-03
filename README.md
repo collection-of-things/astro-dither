@@ -11,7 +11,7 @@ Dither for Astro, based on Leo's dithercn.
 [![CI](https://github.com/screen-gd/astro-dither/actions/workflows/ci.yml/badge.svg)](https://github.com/screen-gd/astro-dither/actions/workflows/ci.yml)
 [![MIT licence](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
 
-[Website](https://astro-dither.vercel.app) (placeholder URL, deployment pending) · [Examples](https://astro-dither.vercel.app/examples) · [npm](https://www.npmjs.com/package/astro-dither)
+[Website](https://astro-dither.vercel.app) (placeholder URL, deployment pending) · [Docs](https://astro-dither.vercel.app/docs) · [Examples](https://astro-dither.vercel.app/examples) · [npm](https://www.npmjs.com/package/astro-dither)
 
 </div>
 

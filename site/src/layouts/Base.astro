@@ -4,6 +4,8 @@ interface Props {
   description?: string;
 }
 
+import SiteHeader from "../components/SiteHeader.astro";
+
 const { title, description = "Animated dither backgrounds, gradients and image effects for Astro. No React." } = Astro.props;
 ---
 
@@ -31,6 +33,7 @@ const { title, description = "Animated dither backgrounds, gradients and image e
     </script>
   </head>
   <body>
+    <SiteHeader />
     <slot />
   </body>
 </html>

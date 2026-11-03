@@ -1,0 +1,389 @@
+---
+import { REPO_URL } from "../site.ts";
+
+const path = Astro.url.pathname;
+
+const LINKS = [
+  { label: "Docs", href: "/docs" },
+  { label: "Examples", href: "/examples" },
+  { label: "Engine", href: "/docs/engine/how-it-works" },
+];
+
+function isActive(label: string): boolean {
+  if (label === "Engine") return path.startsWith("/docs/engine");
+  if (label === "Examples") return path.startsWith("/docs/effects") || path === "/examples";
+  if (label === "Docs") return path.startsWith("/docs") && !path.startsWith("/docs/engine") && !path.startsWith("/docs/effects");
+  return false;
+}
+---
+
+<header class="site-head">
+  <nav class="site-nav" aria-label="Site">
+    <a class="brand" href="/">
+      <img src="/favicon.svg" width="20" height="20" alt="" />
+      <span>astro-dither</span>
+    </a>
+    <div class="links">
+      {LINKS.map((l) => (
+        <a class:list={["link", { on: isActive(l.label) }]} href={l.href}>{l.label}</a>
+      ))}
+    </div>
+    <div class="actions">
+      <button class="search-btn" type="button" data-open-search aria-label="Search (Ctrl K)">
+        <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7" /><path d="m20 20-3.5-3.5" /></svg>
+        <span>Search</span>
+        <kbd>Ctrl K</kbd>
+      </button>
+      <a class="gh" href={REPO_URL} aria-label="GitHub repository" target="_blank" rel="noreferrer">
+        <svg viewBox="0 0 16 16" width="16" height="16" fill="currentColor" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82a7.42 7.42 0 0 1 4 0c1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8Z"/></svg>
+      </a>
+      <button class="menu-btn" type="button" data-open-menu aria-label="Menu">
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 6h18M3 12h18M3 18h18" /></svg>
+      </button>
+    </div>
+  </nav>
+</header>
+
+<div class="sheet" id="site-sheet" hidden>
+  <div class="sheet-back" data-close-menu></div>
+  <div class="sheet-panel">
+    <a href="/docs">Docs</a>
+    <a href="/examples">Examples</a>
+    <a href="/docs/engine/how-it-works">Engine</a>
+    <button class="sheet-search" type="button" data-open-search>Search</button>
+  </div>
+</div>
+
+<div class="search" id="search" hidden>
+  <div class="search-back" data-close-search></div>
+  <div class="search-panel" role="dialog" aria-modal="true" aria-label="Search">
+    <input id="search-input" type="text" placeholder="Search docs" autocomplete="off" spellcheck="false" />
+    <ul id="search-results" role="listbox"></ul>
+  </div>
+</div>
+
+<style>
+  .site-head {
+    position: sticky;
+    top: 12px;
+    z-index: 60;
+    display: flex;
+    justify-content: center;
+    padding: 0 12px;
+    pointer-events: none;
+  }
+  .site-nav {
+    pointer-events: auto;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    max-width: 600px;
+    height: 40px;
+    padding: 0 10px;
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    background: rgba(11, 12, 14, 0.85);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+  }
+  .brand {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--ink);
+    text-decoration: none;
+    flex: none;
+  }
+  .links {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    margin-left: 6px;
+    flex: 1;
+  }
+  .link {
+    font-size: 13px;
+    color: var(--muted);
+    text-decoration: none;
+    padding: 4px 10px;
+    border-radius: 7px;
+    transition: color var(--t-hover) ease, background var(--t-hover) ease;
+  }
+  .link:hover {
+    color: var(--ink);
+  }
+  .link.on {
+    background: var(--line);
+    color: var(--ink);
+  }
+  .actions {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex: none;
+  }
+  .search-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    height: 26px;
+    padding: 0 8px;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    background: transparent;
+    color: var(--muted);
+    font-family: inherit;
+    font-size: 12px;
+    cursor: pointer;
+    transition: color var(--t-hover) ease, border-color var(--t-hover) ease;
+  }
+  .search-btn:hover {
+    color: var(--ink);
+    border-color: #262a31;
+  }
+  .search-btn kbd {
+    font-family: "Geist Mono", ui-monospace, monospace;
+    font-size: 10px;
+    color: var(--muted);
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    padding: 1px 4px;
+  }
+  .gh {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    color: var(--muted);
+    border-radius: 8px;
+    transition: color var(--t-hover) ease;
+  }
+  .gh:hover {
+    color: var(--ink);
+  }
+  .menu-btn {
+    display: none;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    border: 0;
+    border-radius: 8px;
+    background: transparent;
+    color: var(--muted);
+    cursor: pointer;
+  }
+
+  .sheet[hidden],
+  .search[hidden] {
+    display: none;
+  }
+  .sheet,
+  .search {
+    position: fixed;
+    inset: 0;
+    z-index: 100;
+  }
+  .sheet-back,
+  .search-back {
+    position: absolute;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.6);
+  }
+  .sheet-panel {
+    position: absolute;
+    top: 62px;
+    left: 12px;
+    right: 12px;
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    padding: 8px;
+    display: flex;
+    flex-direction: column;
+  }
+  .sheet-panel a,
+  .sheet-search {
+    padding: 10px 12px;
+    font-size: 15px;
+    color: var(--ink);
+    text-decoration: none;
+    border-radius: 8px;
+    border: 0;
+    background: transparent;
+    font-family: inherit;
+    text-align: left;
+    cursor: pointer;
+  }
+  .sheet-panel a:hover,
+  .sheet-search:hover {
+    background: var(--line);
+  }
+  .search-panel {
+    position: absolute;
+    top: 90px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: min(560px, calc(100% - 24px));
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    overflow: hidden;
+  }
+  #search-input {
+    width: 100%;
+    height: 48px;
+    padding: 0 16px;
+    border: 0;
+    border-bottom: 1px solid var(--line);
+    background: transparent;
+    color: var(--ink);
+    font-family: inherit;
+    font-size: 15px;
+    outline: none;
+  }
+  #search-results {
+    margin: 0;
+    padding: 6px;
+    list-style: none;
+    max-height: 320px;
+    overflow-y: auto;
+  }
+  #search-results li a {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    padding: 8px 10px;
+    border-radius: 8px;
+    text-decoration: none;
+  }
+  #search-results li.sel a,
+  #search-results li a:hover {
+    background: var(--line);
+  }
+  #search-results .r-title {
+    font-size: 14px;
+    color: var(--ink);
+  }
+  #search-results .r-title small {
+    color: var(--muted);
+    font-weight: 400;
+    margin-left: 8px;
+    font-size: 12px;
+  }
+  #search-results .r-desc {
+    font-size: 12px;
+    color: var(--muted);
+  }
+
+  @media (max-width: 640px) {
+    .site-nav {
+      max-width: none;
+    }
+    .links {
+      display: none;
+    }
+    .search-btn span,
+    .search-btn kbd {
+      display: none;
+    }
+    .menu-btn {
+      display: inline-flex;
+    }
+    .actions {
+      margin-left: auto;
+    }
+  }
+</style>
+
+<script>
+  interface SearchEntry {
+    title: string;
+    section: string;
+    desc: string;
+    href: string;
+  }
+  let index: SearchEntry[] | undefined;
+  const dialog = document.getElementById("search");
+  const input = document.getElementById("search-input") as HTMLInputElement | null;
+  const list = document.getElementById("search-results");
+  let selected = 0;
+  let results: SearchEntry[] = [];
+
+  function renderResults(items: SearchEntry[]): void {
+    if (!list) return;
+    list.innerHTML = items
+      .map(
+        (r, i) =>
+          `<li role="option" class="${i === selected ? "sel" : ""}" data-i="${i}"><a href="${r.href}"><span class="r-title">${r.title}<small>${r.section}</small></span><span class="r-desc">${r.desc}</span></a></li>`,
+      )
+      .join("");
+  }
+  function search(q: string): void {
+    if (!index) return;
+    const words = q.toLowerCase().split(/\s+/).filter(Boolean);
+    results =
+      words.length === 0
+        ? index.slice(0, 12)
+        : index.filter((e) => words.every((w) => `${e.title} ${e.section} ${e.desc}`.toLowerCase().includes(w)));
+    selected = 0;
+    renderResults(results.slice(0, 20));
+  }
+  async function openSearch(): Promise<void> {
+    dialog?.removeAttribute("hidden");
+    document.getElementById("site-sheet")?.setAttribute("hidden", "");
+    input?.focus();
+    if (index === undefined) {
+      const res = await fetch("/search.json");
+      index = (await res.json()) as SearchEntry[];
+    }
+    if (input) search(input.value);
+  }
+  function closeSearch(): void {
+    dialog?.setAttribute("hidden", "");
+  }
+
+  document.querySelectorAll("[data-open-search]").forEach((b) => b.addEventListener("click", () => void openSearch()));
+  document.querySelectorAll("[data-close-search]").forEach((b) => b.addEventListener("click", closeSearch));
+  document.querySelector("[data-open-menu]")?.addEventListener("click", () =>
+    document.getElementById("site-sheet")?.removeAttribute("hidden"),
+  );
+  document.querySelectorAll("[data-close-menu], .sheet-panel a").forEach((b) =>
+    b.addEventListener("click", () => document.getElementById("site-sheet")?.setAttribute("hidden", "")),
+  );
+
+  document.addEventListener("keydown", (e) => {
+    if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "k") {
+      e.preventDefault();
+      void openSearch();
+    } else if (e.key === "/" && !(e.target instanceof HTMLInputElement) && !(e.target instanceof HTMLTextAreaElement)) {
+      e.preventDefault();
+      void openSearch();
+    } else if (e.key === "Escape") {
+      closeSearch();
+      document.getElementById("site-sheet")?.setAttribute("hidden", "");
+    }
+  });
+  input?.addEventListener("input", () => search(input.value));
+  input?.addEventListener("keydown", (e) => {
+    if (e.key === "ArrowDown" || e.key === "ArrowUp") {
+      e.preventDefault();
+      selected = Math.max(0, Math.min(results.slice(0, 20).length - 1, selected + (e.key === "ArrowDown" ? 1 : -1)));
+      renderResults(results.slice(0, 20));
+    } else if (e.key === "Enter") {
+      const r = results[selected];
+      if (r) location.href = r.href;
+    }
+  });
+  list?.addEventListener("mouseover", (e) => {
+    const li = (e.target instanceof Element ? e.target : null)?.closest("li");
+    if (li?.dataset.i) {
+      selected = Number(li.dataset.i);
+      renderResults(results.slice(0, 20));
+    }
+  });
+</script>
