@@ -171,13 +171,13 @@ const mdPath = md ?? `${href === "/docs" ? "/docs" : href}.md`;
     gap: 40px;
     max-width: 1200px;
     margin: 0 auto;
-    padding: 32px 24px 80px;
+    padding: var(--header-offset) 24px 80px;
     align-items: start;
   }
   .side {
     position: sticky;
-    top: 72px;
-    max-height: calc(100vh - 90px);
+    top: var(--header-offset);
+    max-height: calc(100vh - var(--header-offset) - 18px);
     overflow-y: auto;
     font-size: 14px;
     padding-right: 4px;
@@ -294,13 +294,13 @@ const mdPath = md ?? `${href === "/docs" ? "/docs" : href}.md`;
     font-size: 22px;
     font-weight: 500;
     margin: 44px 0 14px;
-    scroll-margin-top: 80px;
+    scroll-margin-top: calc(var(--header-offset) + 16px);
   }
   .doc-body :global(h3) {
     font-size: 16px;
     font-weight: 500;
     margin: 30px 0 10px;
-    scroll-margin-top: 80px;
+    scroll-margin-top: calc(var(--header-offset) + 16px);
   }
   .doc-body :global(p) {
     font-size: 15px;
@@ -409,7 +409,7 @@ const mdPath = md ?? `${href === "/docs" ? "/docs" : href}.md`;
   }
   .toc {
     position: sticky;
-    top: 72px;
+    top: var(--header-offset);
     font-size: 13px;
   }
   .toc-head {
@@ -480,7 +480,8 @@ const mdPath = md ?? `${href === "/docs" ? "/docs" : href}.md`;
       align-items: center;
       gap: 8px;
       position: sticky;
-      top: 64px;
+      top: var(--header-offset);
+      margin-top: var(--header-offset);
       z-index: 40;
       width: 100%;
       height: 40px;

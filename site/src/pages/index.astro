@@ -1,10 +1,10 @@
 ---
 import Base from "../layouts/Base.astro";
-import { DitherAurora, DitherEffect, DitherGlobe, DitherImage, DitherGradient } from "astro-dither";
-import type { EffectName } from "astro-dither/effects";
+import { DitherAurora, DitherEffect, DitherGradient } from "astro-dither";
 import Button from "../components/ui/Button.astro";
 import CopyButton from "../components/ui/CopyButton.astro";
 import Snippet from "../components/ui/Snippet.astro";
+import { Code } from "astro:components";
 import { REPO_URL, PAPER_URL } from "../site.ts";
 
 const INSTALL = {
@@ -19,37 +19,88 @@ const INSTALL_TABS = [
   { label: "bun", code: "bun add astro-dither" },
 ];
 
-interface Card {
-  name: string;
-  group: string;
-  cls: string;
-  effect?: EffectName;
-  image?: string;
-  globe?: boolean;
+interface UsageItem {
+  label: string;
+  el: "dither-surface" | "dither-image";
+  data: Record<string, unknown>;
+  img?: string;
+  code: string;
 }
 
-const CARDS: Card[] = [
-  { name: "Aurora", group: "Scenes", cls: "big", effect: "aurora" },
-  { name: "Mesh gradient", group: "Gradients", cls: "", effect: "mesh" },
-  { name: "Dither image", group: "Images", cls: "", image: "/examples/portrait.jpg" },
-  { name: "Waves", group: "Backgrounds", cls: "", effect: "waves" },
-  { name: "Globe", group: "Scenes", cls: "", globe: true },
-  { name: "Contours", group: "Backgrounds", cls: "", effect: "contours" },
-  { name: "Retro grid", group: "Backgrounds", cls: "wide", effect: "retro-grid" },
+const USAGE_ITEMS: UsageItem[] = [
+  {
+    label: "Aurora",
+    el: "dither-surface",
+    data: { effect: "aurora" },
+    code: '---\nimport { DitherAurora } from "astro-dither";\n---\n\n<DitherAurora />',
+  },
+  {
+    label: "Mesh",
+    el: "dither-surface",
+    data: { effect: "mesh" },
+    code: '---\nimport { DitherEffect } from "astro-dither";\n---\n\n<DitherEffect effect="mesh" />',
+  },
+  {
+    label: "Image",
+    el: "dither-image",
+    data: { colorFront: "#00b2ff", colorHighlight: "#d6efff" },
+    img: '<img src="/examples/landscape.jpg" alt="A dithered landscape" crossorigin="anonymous" decoding="async" />',
+    code: '---\nimport { DitherImage } from "astro-dither";\n---\n\n<DitherImage src="/examples/landscape.jpg" alt="A dithered landscape" />',
+  },
 ];
 
-const INSIDE_COLS = [
-  ["Backgrounds", "10", "Waves, plasma, smoke, silk, contours, tunnel and more for heroes and sections."],
-  ["Gradients", "4", "Linear, radial, conic and mesh ramps, plus beams and glow."],
-  ["Images", "1", "DitherImage turns any photo into a field. The img and its alt stay."],
-  ["Scenes", "4", "Aurora, globe, eclipse and starfield."],
+const STRIP = [
+  {
+    name: "Aurora",
+    slug: "aurora",
+    data: {
+      effect: "aurora",
+      params: { curtains: 5, rays: 12, length: 0.7, tilt: -6, drift: 0.4 },
+      palette: ["#010604", "#04291a", "#0f7a3a", "#4ade80", "#c4b5fd"],
+    },
+    code: '<DitherAurora curtains={5} rays={12} />',
+  },
+  { name: "Plasma", slug: "plasma", data: { effect: "plasma" }, code: '<DitherEffect effect="plasma" />' },
+  { name: "Waves", slug: "waves", data: { effect: "waves" }, code: '<DitherEffect effect="waves" />' },
+  { name: "Contours", slug: "contours", data: { effect: "contours" }, code: '<DitherEffect effect="contours" />' },
+  { name: "Tunnel", slug: "tunnel", data: { effect: "tunnel" }, code: '<DitherEffect effect="tunnel" />' },
+  { name: "Retro grid", slug: "retro-grid", data: { effect: "retro-grid" }, code: '<DitherEffect effect="retro-grid" />' },
+  { name: "Smoke", slug: "smoke", data: { effect: "smoke" }, code: '<DitherEffect effect="smoke" />' },
+  { name: "Starfield", slug: "starfield", data: { effect: "starfield" }, code: '<DitherEffect effect="starfield" />' },
 ];
 
-const INSTALL_COLS = [
-  ["astro-dither", "The package. One dependency: @paper-design/shaders."],
-  ["<DitherAurora />", "A component. Import it and give its parent a height."],
-  ["npx astro-dither add", "Copy the source into your repo instead of a dependency."],
-  ["astro-dither/effects", "The registry. Effect names, params and types for your own."],
+const BAYER = [0, 8, 2, 10, 12, 4, 14, 6, 3, 11, 1, 9, 15, 7, 13, 5];
+const BAYER_START = 6;
+
+function tilesSvg(value: number): string {
+  const dots = BAYER.map((t, i) => {
+    if (t >= value) return "";
+    const x = i % 4;
+    const y = Math.floor(i / 4);
+    const cells = [];
+    for (let tx = 0; tx < 8; tx++) {
+      for (let ty = 0; ty < 8; ty++) {
+        cells.push(`<circle cx='${x + tx * 4 + 0.5}' cy='${y + ty * 4 + 0.5}' r='0.34' fill='%2300b2ff'/>`);
+      }
+    }
+    return cells.join("");
+  }).join("");
+  const svg = `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' fill='%230b0c0e'/>${dots}</svg>`;
+  return `url("data:image/svg+xml,${svg.replace(/#/g, "%23").replace(/</g, "%3C").replace(/>/g, "%3E").replace(/"/g, "'")}")`;
+}
+
+const FACTS = [
+  ["No React", "Plain Astro components and one custom element each."],
+  ["One WebGL context", "Every ordered effect on the page shares it."],
+  ["Pauses itself", "Offscreen and in hidden tabs it stops drawing."],
+  ["Reduced motion", "Holds a still frame instead of animating."],
+  ["Real images stay", "DitherImage keeps the img and its alt text."],
+];
+
+const INSTALL_LINKS = [
+  ["Installation guide", "/docs/installation"],
+  ["Components", "/docs/components/dither"],
+  ["Write your own effect", "/docs/engine/write-your-own"],
 ];
 
 const wordmarkMask =
@@ -80,113 +131,153 @@ const wordmarkMask =
   </header>
 
   <main class="container">
-    {/* Bento of examples */}
-    <section class="section" id="examples" data-enter style="--i:0">
+    {/* A. Write this, get this */}
+    <section class="section" id="usage" data-enter style="--i:0">
       <div class="sec-head">
-        <h2>Start from an example.</h2>
+        <h2>Write this, get this.</h2>
         <div class="sec-side">
-          <p>Six components, eighteen effects, one engine. Use one as it is or tune its props.</p>
-          <a class="more" href="/examples">See all 18 effects &rsaquo;</a>
+          <p>Every effect is one Astro component. This is the whole setup.</p>
         </div>
       </div>
-      <div class="bento">
-        {CARDS.map((card) => (
-          <figure class={`card ${card.cls}`}>
-            <a class="card-link" href={card.image ? "/docs/components/dither-image" : `/docs/effects/${card.effect ?? "globe"}`} aria-label={`${card.name} docs`} />
-            <div class="card-vis">
-              {card.image ? (
-                <DitherImage src={card.image} alt="Portrait photograph dithered into blue dots" colorFront="#00b2ff" colorHighlight="#d6efff" />
-              ) : card.globe ? (
-                <DitherGlobe palette={["transparent", "#00b2ff", "#d6efff"]} />
-              ) : (
-                <DitherEffect effect={card.effect ?? "waves"} />
-              )}
-            </div>
-            <figcaption class="card-cap">
-              <span class="card-name">{card.name}</span>
-              <span class="card-group">{card.group}</span>
-            </figcaption>
-          </figure>
+      <div class="usage-chips" id="usage-chips">
+        {USAGE_ITEMS.map((u, i) => (
+          <button
+            class:list={["usage-chip", { on: i === 0 }]}
+            type="button"
+            data-el={u.el}
+            data-dd={JSON.stringify(u.data)}
+            data-img={u.img ?? ""}
+            data-code={u.code}
+          >
+            {u.label}
+          </button>
         ))}
       </div>
-    </section>
-
-    {/* Tune it live */}
-    <section class="section" data-enter style="--i:0">
-      <div class="sec-head">
-        <h2>Tune it live.</h2>
-        <div class="sec-side">
-          <p>Every effect is one component. Change a prop and the dither redraws.</p>
+      <div class="usage-row">
+        <div class="usage-code card">
+          <div class="file-bar">
+            <span class="file-tab">src/pages/index.astro</span>
+            <CopyButton id="usage-copy" value={USAGE_ITEMS[0].code} label="Copy snippet" />
+          </div>
+          <div class="usage-pres">
+            {USAGE_ITEMS.map((u, i) => (
+              <div class:list={["uc", { on: i === 0 }]} data-uc={i}>
+                <Code code={u.code} lang="astro" theme="github-dark-dimmed" />
+              </div>
+            ))}
+          </div>
         </div>
-      </div>
-      <div class="tune-tabs" role="tablist">
-        <button class="tune-tab on" type="button" data-tune="0">Aurora</button>
-        <button class="tune-tab" type="button" data-tune="1">Contours</button>
-        <button class="tune-tab" type="button" data-tune="2">Gradient</button>
-      </div>
-      <figure class="card tune-card">
-        <div class="card-vis" id="tune-live">
+        <div class="usage-live card" id="usage-live">
           <DitherAurora />
         </div>
-        <figcaption class="card-cap tune-cap">
-          <code class="tune-code" id="tune-code">&lt;DitherAurora /&gt;</code>
-          <CopyButton id="tune-copy" value="<DitherAurora />" size="sm" label="Copy code" />
-        </figcaption>
-      </figure>
+      </div>
     </section>
 
-    {/* What's inside */}
-    <section class="section" data-enter style="--i:0">
+    {/* B. Effects filmstrip */}
+    <section class="section" id="effects" data-enter style="--i:0">
       <div class="sec-head">
-        <h2>What&rsquo;s inside.</h2>
-        <div class="sec-side">
-          <p>astro-dither is an open-source set of Astro components on a small WebGL engine. Everything ships as source you can read.</p>
+        <h2>Eighteen effects, one engine.</h2>
+        <div class="sec-side strip-side">
+          <a class="more" href="/docs/effects">Browse all effects</a>
+          <span class="strip-arrows">
+            <button class="strip-btn" type="button" data-strip="-1" aria-label="Previous effects" disabled>&larr;</button>
+            <button class="strip-btn" type="button" data-strip="1" aria-label="Next effects">&rarr;</button>
+          </span>
         </div>
       </div>
-      <div class="inside-cols">
-        <div class="inside-col">
-          <h3>The components</h3>
-          <p>
-            Dither for Paper&rsquo;s animated shapes, DitherImage for photographs, DitherGradient, DitherAurora and
-            DitherGlobe for the named looks, and DitherEffect for any of the eighteen fields.
-          </p>
+      <div class="strip-bleed">
+        <div class="strip" id="strip">
+          {STRIP.map((s) => (
+            <a class="strip-item" href={`/docs/effects/${s.slug}`}>
+              <span class="strip-vis">
+                <dither-surface data-dither={JSON.stringify(s.data)} aria-hidden="true" />
+              </span>
+              <span class="strip-name">{s.name}</span>
+              <code class="strip-code">{s.code}</code>
+            </a>
+          ))}
         </div>
-        <div class="inside-col">
-          <h3>The engine</h3>
-          <p>
-            Every effect shares one WebGL context, thresholds through Bayer 2&times;2, 4&times;4, 8&times;8 or noise,
-            pauses offscreen and in hidden tabs, respects reduced motion, and keeps the img and alt text in the tree.
-          </p>
-        </div>
-      </div>
-      <div class="inside-grid">
-        {INSIDE_COLS.map(([name, count, line]) => (
-          <div class="inside-item">
-            <p class="inside-num">{name} <span>{count}</span></p>
-            <p class="inside-line">{line}</p>
-          </div>
-        ))}
       </div>
     </section>
 
-    {/* Install */}
-    <section class="section install-sec" id="install" data-enter style="--i:0">
-      <h2>One command, then build.</h2>
-      <p class="install-sub">
-        Add the package with your package manager.<br />
-        Then import a component and give its parent a height.
-      </p>
-      <Snippet class="install-snippet" tabs={INSTALL_TABS} defaultTab="pnpm" />
-      <p class="alt-install">
-        Or copy the source into your project: <code>npx astro-dither add aurora</code>
-        <CopyButton value="npx astro-dither add aurora" size="sm" label="Copy source command" />
-      </p>
-      <div class="install-cols">
-        {INSTALL_COLS.map(([name, line]) => (
-          <div class="install-col">
-            <code class="install-col-name">{name}</code>
-            <p class="inside-line">{line}</p>
+    {/* C. How ordered dithering works */}
+    <section class="section" id="how" data-enter style="--i:0">
+      <div class="how-cols">
+        <div class="how-left">
+          <h2>Built from a 4&times;4 grid of thresholds.</h2>
+          <p class="how-p">
+            Each cell compares the brightness under it to its number in the Bayer matrix and lights up if it is brighter.
+            Try it: brighter tone, more cells lit, more ink.
+          </p>
+          <p class="how-p">
+            The pattern repeats across the whole surface. The effects decide the brightness; the matrix and the palette
+            decide the look.
+          </p>
+          <ul class="how-facts">
+            {FACTS.map(([term, line]) => (
+              <li><strong>{term}</strong> {line}</li>
+            ))}
+          </ul>
+        </div>
+        <div class="how-right" data-bayer>
+          <div class="bayer-card card">
+            <div class="bayer-fig">
+              <div class="bayer-grid" aria-hidden="true">
+                {BAYER.map((v) => (
+                  <span class:list={["bayer-cell", { lit: v < BAYER_START }]} data-b={v}>{v}</span>
+                ))}
+              </div>
+              <div class="bayer-tiles" aria-hidden="true" style={`background-image:${tilesSvg(BAYER_START)}`} />
+            </div>
+            <label class="bayer-ctl">
+              <span class="bayer-ctl-row">
+                Brightness
+                <output id="bayer-out">{`Brightness ${BAYER_START} / 16 · ${BAYER_START} of 16 cells lit`}</output>
+              </span>
+              <input
+                type="range"
+                min="0"
+                max="16"
+                step="1"
+                value={BAYER_START}
+                id="bayer-range"
+                aria-label="Brightness threshold"
+              />
+            </label>
+            <label class="bayer-play">
+              <input type="checkbox" id="bayer-play" />
+              Play
+            </label>
+            <p class="sr-only" id="bayer-summary">
+              A 4 by 4 Bayer matrix. At brightness 6, the 6 lowest-numbered cells light up and tile into a repeating dot pattern.
+            </p>
           </div>
+        </div>
+      </div>
+    </section>
+
+    {/* D. Install band */}
+    <section class="section" id="install" data-enter style="--i:0">
+      <div class="install-band card">
+        <div class="install-col">
+          <h2>Install</h2>
+          <p>Astro 5 or newer. One dependency: Paper Shaders.</p>
+        </div>
+        <div class="install-col install-mid">
+          <Snippet tabs={INSTALL_TABS} defaultTab="pnpm" />
+        </div>
+        <div class="install-col">
+          <p class="install-own">Prefer owning the code?</p>
+          <p class="install-cli">
+            <code>npx astro-dither add aurora</code>
+            <CopyButton value="npx astro-dither add aurora" size="sm" label="Copy source command" />
+          </p>
+          <a class="install-doc" href="/docs/copy-the-source">Read the CLI docs</a>
+        </div>
+      </div>
+      <div class="install-links">
+        {INSTALL_LINKS.map(([label, href]) => (
+          <a href={href}>{label}</a>
         ))}
       </div>
     </section>
@@ -358,7 +449,7 @@ const wordmarkMask =
       color: var(--accent);
     }
 
-    /* ---------- Cards ---------- */
+    /* ---------- Shared card ---------- */
     .card {
       position: relative;
       background: var(--card);
@@ -367,92 +458,179 @@ const wordmarkMask =
       overflow: hidden;
       display: flex;
       flex-direction: column;
-      transition: border-color var(--t-hover) ease;
     }
-    .card:hover {
-      border-color: #262a31;
-    }
-    .card-link {
-      position: absolute;
-      inset: 0;
-      z-index: 3;
-    }
-    .card-vis {
-      position: relative;
-      flex: 1;
-      min-height: 0;
-    }
-    .card-vis dither-surface,
-    .card-vis dither-image {
-      position: absolute;
-      inset: 0;
-      width: 100%;
-      height: 100%;
-    }
-    .card-cap {
+
+    /* ---------- A. Write this, get this ---------- */
+    .usage-chips {
       display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 12px 16px;
-      font-size: 13px;
-      border-top: 1px solid var(--line);
-      background: var(--card);
-      position: relative;
-      z-index: 2;
-    }
-    .card-name {
-      color: var(--ink);
-      font-weight: 500;
-    }
-    .card-group {
-      color: var(--muted);
-    }
-
-    /* ---------- Bento ---------- */
-    .bento {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      grid-auto-rows: 230px;
-      gap: 16px;
-    }
-    .bento .big {
-      grid-column: span 2;
-      grid-row: span 2;
-    }
-    .bento .wide {
-      grid-column: span 3;
-    }
-
-    /* ---------- Tune it live ---------- */
-    .tune-tabs {
-      display: inline-flex;
-      gap: 4px;
-      padding: 4px;
+      gap: 8px;
       margin-bottom: 16px;
-      background: var(--card);
-      border: 1px solid var(--line);
-      border-radius: 999px;
     }
-    .tune-tab {
-      padding: 7px 16px;
-      border: 0;
+    .usage-chip {
+      height: 32px;
+      padding: 0 16px;
+      border: 1px solid var(--line);
       border-radius: 999px;
       background: transparent;
       color: var(--muted);
       font-family: inherit;
-      font-size: 14px;
+      font-size: 13px;
       cursor: pointer;
-      transition: color var(--t-hover) ease, background var(--t-hover) ease;
+      transition: color var(--t-hover) ease, border-color var(--t-hover) ease;
     }
-    .tune-tab.on {
+    .usage-chip:hover {
+      color: var(--ink);
+      border-color: #262a31;
+    }
+    .usage-chip.on {
       background: var(--line);
       color: var(--ink);
     }
-    .tune-card {
-      aspect-ratio: 21 / 9;
-      min-height: 300px;
+    .usage-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      align-items: stretch;
     }
-    .tune-code {
+    .usage-code {
+      min-height: 420px;
+    }
+    .file-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 8px 12px;
+      border-bottom: 1px solid var(--line);
+      background: #14161a;
+    }
+    .file-tab {
+      font-family: "Geist Mono", ui-monospace, monospace;
+      font-size: 12px;
+      color: var(--muted);
+      padding: 3px 10px;
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      background: var(--card);
+    }
+    .usage-pres {
+      flex: 1;
+      min-height: 0;
+      overflow-y: auto;
+    }
+    .usage-pres .uc {
+      display: none;
+      padding: 18px 20px;
+    }
+    .usage-pres .uc.on {
+      display: block;
+    }
+    .usage-pres pre {
+      margin: 0;
+      background: transparent !important;
+      font-family: "Geist Mono", ui-monospace, monospace;
+      font-size: 13px;
+      line-height: 1.7;
+    }
+    .usage-live {
+      min-height: 420px;
+      position: relative;
+    }
+    .usage-live > * {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+
+    /* ---------- B. Effects filmstrip ---------- */
+    .strip-side {
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 16px;
+    }
+    .strip-side .more {
+      margin: 0;
+      width: auto;
+      text-align: right;
+    }
+    .strip-arrows {
+      display: inline-flex;
+      gap: 4px;
+    }
+    .strip-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 32px;
+      height: 32px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: transparent;
+      color: var(--muted);
+      font-family: inherit;
+      cursor: pointer;
+      transition: color var(--t-hover) ease, border-color var(--t-hover) ease;
+    }
+    .strip-btn:hover:not(:disabled) {
+      color: var(--ink);
+      border-color: #262a31;
+    }
+    .strip-btn:disabled {
+      opacity: 0.3;
+      cursor: default;
+    }
+    .strip-bleed {
+      margin-right: calc(50% - 50vw);
+    }
+    .strip {
+      display: flex;
+      gap: 16px;
+      overflow-x: auto;
+      scroll-snap-type: x mandatory;
+      scrollbar-width: none;
+      padding-bottom: 4px;
+    }
+    .strip::-webkit-scrollbar {
+      display: none;
+    }
+    .strip-item {
+      flex: none;
+      width: 280px;
+      scroll-snap-align: start;
+      text-decoration: none;
+    }
+    .strip-vis {
+      display: block;
+      position: relative;
+      aspect-ratio: 3 / 4;
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      overflow: hidden;
+      background: var(--card);
+      transition: border-color var(--t-hover) ease;
+    }
+    .strip-item:hover .strip-vis {
+      border-color: #262a31;
+    }
+    .strip-vis dither-surface {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+    .strip-name {
+      display: block;
+      margin-top: 12px;
+      font-size: 15px;
+      font-weight: 500;
+      color: var(--ink);
+    }
+    .strip-code {
+      display: block;
+      margin-top: 4px;
       font-family: "Geist Mono", ui-monospace, monospace;
       font-size: 13px;
       color: var(--muted);
@@ -461,93 +639,188 @@ const wordmarkMask =
       text-overflow: ellipsis;
     }
 
-    /* ---------- What's inside ---------- */
-    .inside-cols {
+    /* ---------- C. Bayer explainer ---------- */
+    .how-cols {
       display: grid;
       grid-template-columns: 1fr 1fr;
-      gap: 48px;
+      gap: 64px;
+      align-items: start;
     }
-    .inside-col h3 {
-      font-size: 16px;
-      font-weight: 500;
-      color: var(--ink);
-      margin-bottom: 10px;
+    .how-left h2 {
+      margin-bottom: 20px;
     }
-    .inside-col p {
+    .how-p {
       font-size: var(--step-body);
-      line-height: 1.65;
+      line-height: 1.7;
       color: var(--muted);
+      margin: 0 0 14px;
+      max-width: 52ch;
     }
-    .inside-grid {
+    .how-facts {
+      list-style: none;
+      padding: 0;
+      margin: 28px 0 0;
+    }
+    .how-facts li {
+      padding: 10px 0;
+      border-top: 1px solid var(--line);
+      font-size: 14px;
+      color: var(--muted);
+      line-height: 1.5;
+    }
+    .how-facts strong {
+      color: var(--ink);
+      font-weight: 500;
+      margin-right: 8px;
+    }
+    .how-right {
+      position: sticky;
+      top: var(--header-offset);
+    }
+    .bayer-card {
+      padding: 20px;
+    }
+    .bayer-fig {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-bottom: 18px;
+    }
+    .bayer-grid {
       display: grid;
       grid-template-columns: repeat(4, 1fr);
-      gap: 24px;
-      margin-top: 64px;
-      padding-top: 32px;
-      border-top: 1px solid var(--line);
+      aspect-ratio: 1;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      overflow: hidden;
     }
-    .inside-num {
-      font-size: 15px;
-      font-weight: 500;
-      color: var(--ink);
+    .bayer-cell {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: "Geist Mono", ui-monospace, monospace;
+      font-size: 12px;
+      color: var(--muted);
+      border: 1px solid var(--line);
+      margin: -1px 0 0 -1px;
+      transition: background 150ms ease, color 150ms ease;
+    }
+    .bayer-cell.lit {
+      background: var(--accent);
+      color: var(--on-accent);
+    }
+    .bayer-tiles {
+      aspect-ratio: 1;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      background-repeat: no-repeat;
+      background-size: cover;
+      image-rendering: pixelated;
+    }
+    .bayer-ctl {
+      display: block;
+      font-size: 13px;
+      color: var(--muted);
+    }
+    .bayer-ctl-row {
       display: flex;
       justify-content: space-between;
-      align-items: baseline;
+      margin-bottom: 6px;
     }
-    .inside-num span {
-      color: var(--accent);
-      font-weight: 400;
+    .bayer-ctl output {
+      font-family: "Geist Mono", ui-monospace, monospace;
+      font-size: 12px;
+      color: var(--ink);
     }
-    .inside-line {
-      margin-top: 8px;
-      font-size: 14px;
-      line-height: 1.6;
-      color: var(--muted);
+    .bayer-ctl input[type="range"] {
+      width: 100%;
+      accent-color: var(--accent);
     }
-
-    /* ---------- Install ---------- */
-    .install-sec {
-      text-align: center;
-      padding-bottom: 120px;
-    }
-    .install-sub {
-      margin-top: 16px;
-      font-size: var(--step-body);
-      line-height: 1.6;
-      color: var(--muted);
-    }
-    .install-snippet {
-      max-width: 620px;
-      margin: 36px auto 0;
-      text-align: left;
-    }
-    .alt-install {
-      margin-top: 20px;
-      font-size: 14px;
-      color: var(--muted);
+    .bayer-play {
       display: inline-flex;
       align-items: center;
       gap: 8px;
-      flex-wrap: wrap;
-      justify-content: center;
+      margin-top: 12px;
+      font-size: 13px;
+      color: var(--muted);
+      cursor: pointer;
     }
-    .alt-install code {
+    .bayer-play input {
+      accent-color: var(--accent);
+    }
+    .sr-only {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      overflow: hidden;
+      clip: rect(0 0 0 0);
+      white-space: nowrap;
+    }
+
+    /* ---------- D. Install band ---------- */
+    .install-band {
+      display: grid;
+      grid-template-columns: 1fr 1.2fr 1fr;
+      gap: 40px;
+      padding: 40px;
+      flex-direction: row;
+    }
+    .install-band.card {
+      flex-direction: row;
+    }
+    .install-col h2 {
+      font-size: 26px;
+    }
+    .install-col > p {
+      margin-top: 10px;
+      font-size: 14px;
+      line-height: 1.6;
+      color: var(--muted);
+    }
+    .install-own {
+      font-size: 14px;
+      color: var(--ink);
+      font-weight: 500;
+    }
+    .install-cli {
+      margin-top: 10px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    .install-cli code {
       font-family: "Geist Mono", ui-monospace, monospace;
       font-size: 13px;
       color: var(--ink);
+      background: var(--line);
+      padding: 4px 8px;
+      border-radius: 6px;
     }
-    .install-cols {
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: 24px;
-      margin-top: 64px;
-      padding-top: 32px;
-      border-top: 1px solid var(--line);
-      text-align: left;
+    .install-doc {
+      display: inline-block;
+      margin-top: 12px;
+      font-size: 14px;
+      color: var(--muted);
+      text-decoration: none;
     }
-    .install-col-name {
-      font-family: "Geist Mono", ui-monospace, monospace;
-      font-size: 13px;
+    .install-doc:hover {
+      color: var(--ink);
+    }
+    .install-links {
+      display: flex;
+      gap: 32px;
+      justify-content: center;
+      margin-top: 28px;
+      padding-bottom: 120px;
+      font-size: 14px;
+    }
+    .install-links a {
+      color: var(--muted);
+      text-decoration: none;
+      transition: color var(--t-hover) ease;
+    }
+    .install-links a:hover {
       color: var(--ink);
     }
 
@@ -625,17 +898,6 @@ const wordmarkMask =
 
     /* ---------- Small screens ---------- */
     @media (max-width: 900px) {
-      .bento {
-        grid-template-columns: repeat(2, 1fr);
-      }
-      .bento .big,
-      .bento .wide {
-        grid-column: span 2;
-      }
-      .inside-grid,
-      .install-cols {
-        grid-template-columns: repeat(2, 1fr);
-      }
       .sec-head {
         grid-template-columns: 1fr;
         gap: 16px;
@@ -645,18 +907,26 @@ const wordmarkMask =
         margin-left: 0;
         text-align: left;
       }
-      .inside-cols {
+      .usage-row {
         grid-template-columns: 1fr;
-        gap: 32px;
+      }
+      .usage-code,
+      .usage-live {
+        min-height: 340px;
+      }
+      .how-cols {
+        grid-template-columns: 1fr;
+        gap: 40px;
+      }
+      .how-right {
+        position: static;
+      }
+      .install-band {
+        grid-template-columns: 1fr;
+        gap: 28px;
       }
     }
     @media (max-width: 640px) {
-      .nav {
-        margin: 12px var(--margin) -56px;
-      }
-      .nav-links a:first-child {
-        display: none;
-      }
       .hero h1 {
         letter-spacing: -0.02em;
       }
@@ -664,18 +934,16 @@ const wordmarkMask =
         flex-direction: column;
         align-items: stretch;
       }
-      .bento {
-        grid-template-columns: 1fr;
-        grid-auto-rows: 220px;
+      .strip-item {
+        width: 72vw;
       }
-      .bento .big,
-      .bento .wide {
-        grid-column: span 1;
-        grid-row: span 2;
+      .install-band {
+        padding: 24px;
       }
-      .tune-card {
-        aspect-ratio: auto;
-        height: 56vh;
+      .install-links {
+        flex-direction: column;
+        gap: 12px;
+        align-items: center;
       }
       .footer-inner {
         flex-direction: column;
@@ -691,32 +959,101 @@ const wordmarkMask =
   </style>
 
   <script>
-    // Tune-it-live tabs: swap the surface, the code line and the copy value.
-    const TUNES = [
-      { effect: "aurora", code: "<DitherAurora />" },
-      { effect: "contours", code: '<DitherEffect effect="contours" />' },
-      { effect: "gradient", code: '<DitherGradient mode="linear" />' },
-    ];
-    const tuneLive = document.getElementById("tune-live");
-    const tuneCode = document.getElementById("tune-code");
-    const tuneCopy = document.getElementById("tune-copy");
-    document.querySelectorAll<HTMLElement>(".tune-tab").forEach((tab) => {
-      tab.addEventListener("click", () => {
-        document.querySelectorAll<HTMLElement>(".tune-tab").forEach((t) => t.classList.remove("on"));
-        tab.classList.add("on");
-        const tune = TUNES[Number(tab.dataset.tune)];
-        if (!tune) return;
-        if (tuneCode) tuneCode.textContent = tune.code;
-        if (tuneCopy) tuneCopy.setAttribute("data-value", tune.code);
-        if (tuneLive) {
-          const surface = document.createElement("dither-surface");
-          surface.setAttribute("aria-hidden", "true");
-          surface.setAttribute("data-dither", JSON.stringify({ effect: tune.effect }));
-          surface.style.cssText = "display:block;width:100%;height:100%";
-          tuneLive.replaceChildren(surface);
+    // Write this, get this: chips swap the code block and the live surface.
+    const usageLive = document.getElementById("usage-live");
+    const usageCopy = document.getElementById("usage-copy");
+    document.querySelectorAll<HTMLElement>(".usage-chip").forEach((chip, i) => {
+      chip.addEventListener("click", () => {
+        document.querySelectorAll<HTMLElement>(".usage-chip").forEach((c) => c.classList.remove("on"));
+        chip.classList.add("on");
+        document.querySelectorAll<HTMLElement>("[data-uc]").forEach((uc) => {
+          uc.classList.toggle("on", Number(uc.dataset.uc) === i);
+        });
+        usageCopy?.setAttribute("data-value", chip.dataset.code ?? "");
+        if (usageLive) {
+          const el = document.createElement(chip.dataset.el ?? "dither-surface");
+          el.setAttribute("aria-hidden", "true");
+          el.setAttribute("data-dither", chip.dataset.dd ?? "{}");
+          if (chip.dataset.img) el.innerHTML = chip.dataset.img;
+          usageLive.replaceChildren(el);
         }
       });
     });
+
+    // Effects filmstrip arrows: scroll the strip, disable at the ends.
+    const strip = document.getElementById("strip");
+    const stripBtns = [...document.querySelectorAll<HTMLButtonElement>("[data-strip]")];
+    const stripUpdate = () => {
+      if (!strip) return;
+      const max = strip.scrollWidth - strip.clientWidth;
+      for (const b of stripBtns) {
+        const dir = Number(b.dataset.strip);
+        b.disabled = dir < 0 ? strip.scrollLeft <= 4 : strip.scrollLeft >= max - 4;
+      }
+    };
+    stripBtns.forEach((b) =>
+      b.addEventListener("click", () => {
+        const item = strip?.querySelector(".strip-item");
+        const w = item ? (item as HTMLElement).offsetWidth + 16 : 296;
+        strip?.scrollBy({ left: w * Number(b.dataset.strip), behavior: "smooth" });
+      }),
+    );
+    strip?.addEventListener("scroll", stripUpdate, { passive: true });
+    addEventListener("resize", stripUpdate);
+    stripUpdate();
+
+    // Bayer demo: slider lights cells under the threshold, play sweeps it.
+    const BAYER4 = [0, 8, 2, 10, 12, 4, 14, 6, 3, 11, 1, 9, 15, 7, 13, 5];
+    const bayerSvg = (v: number): string => {
+      let dots = "";
+      BAYER4.forEach((t, i) => {
+        if (t >= v) return;
+        const x = i % 4;
+        const y = Math.floor(i / 4);
+        for (let tx = 0; tx < 8; tx++) {
+          for (let ty = 0; ty < 8; ty++) {
+            dots += `<circle cx='${x + tx * 4 + 0.5}' cy='${y + ty * 4 + 0.5}' r='0.34' fill='%2300b2ff'/>`;
+          }
+        }
+      });
+      return `url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' fill='%230b0c0e'/>${dots}</svg>")`;
+    };
+    const bayerRoot = document.querySelector("[data-bayer]");
+    const bayerRange = document.getElementById("bayer-range") as HTMLInputElement | null;
+    const bayerOut = document.getElementById("bayer-out");
+    const bayerTiles = document.querySelector<HTMLElement>(".bayer-tiles");
+    const bayerSummary = document.getElementById("bayer-summary");
+    const bayerSet = (v: number) => {
+      const lit = BAYER4.filter((t) => t < v).length;
+      bayerRoot?.querySelectorAll<HTMLElement>(".bayer-cell").forEach((c) => {
+        c.classList.toggle("lit", Number(c.dataset.b) < v);
+      });
+      if (bayerOut) bayerOut.textContent = `Brightness ${v} / 16 · ${lit} of 16 cells lit`;
+      if (bayerTiles) bayerTiles.style.backgroundImage = bayerSvg(v);
+      if (bayerSummary) {
+        bayerSummary.textContent = `A 4 by 4 Bayer matrix. At brightness ${v}, ${lit} cells light up and tile into a repeating dot pattern.`;
+      }
+    };
+    bayerRange?.addEventListener("input", () => bayerSet(Number(bayerRange.value)));
+    const reduceMotion = matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const bayerPlay = document.getElementById("bayer-play") as HTMLInputElement | null;
+    let bayerTimer: number | undefined;
+    bayerPlay?.addEventListener("change", () => {
+      if (bayerPlay.checked && !reduceMotion && bayerRange) {
+        let dir = 1;
+        bayerTimer = setInterval(() => {
+          let v = Number(bayerRange.value) + dir;
+          if (v >= 16 || v <= 0) dir = -dir;
+          v = Math.max(0, Math.min(16, v));
+          bayerRange.value = String(v);
+          bayerSet(v);
+        }, 120) as unknown as number;
+      } else {
+        clearInterval(bayerTimer);
+        bayerPlay.checked = false;
+      }
+    });
+    if (reduceMotion && bayerPlay?.parentElement) bayerPlay.parentElement.style.display = "none";
 
     // Section entrances.
     const io = new IntersectionObserver(
