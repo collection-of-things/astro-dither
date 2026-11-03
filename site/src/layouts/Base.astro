@@ -1,0 +1,163 @@
+---
+interface Props {
+  title: string;
+  description?: string;
+}
+
+const { title, description = "Animated dither backgrounds, gradients and image effects for Astro. No React." } = Astro.props;
+---
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width" />
+    <title>{title}</title>
+    <meta name="description" content={description} />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content={new URL(Astro.url.pathname, Astro.site)} />
+    <meta property="og:image" content={new URL("/og.png", Astro.site)} />
+    <meta name="twitter:card" content="summary_large_image" />
+    <link rel="canonical" href={new URL(Astro.url.pathname, Astro.site)} />
+    <link rel="icon" href="/favicon.ico" sizes="32x32" />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet" />
+    <script is:inline>
+      document.documentElement.classList.add("js");
+    </script>
+  </head>
+  <body>
+    <slot />
+  </body>
+</html>
+
+<style is:global>
+  :root {
+    --ground: #000000;
+    --ink: #f2f4f7;
+    --muted: #a1a8b3;
+    --card: #0f1012;
+    --line: #1c1f24;
+    --accent: #00b2ff;
+    --on-accent: #00141f;
+
+    --step-small: clamp(0.8125rem, 0.79rem + 0.1vw, 0.875rem);
+    --step-body: clamp(0.9375rem, 0.9rem + 0.15vw, 1rem);
+    --step-lead: clamp(1rem, 0.95rem + 0.25vw, 1.125rem);
+    --step-head: clamp(2rem, 1.6rem + 1.8vw, 2.5rem);
+    --step-display: clamp(2.5rem, 5vw, 4.25rem);
+
+    --margin: 24px;
+    --ease-expo: cubic-bezier(0.16, 1, 0.3, 1);
+    --t-hover: 200ms;
+  }
+
+  *,
+  *::before,
+  *::after {
+    box-sizing: border-box;
+  }
+
+  html,
+  body {
+    margin: 0;
+    background: var(--ground);
+    color: var(--ink);
+    font-family: "Geist", system-ui, sans-serif;
+    font-size: 16px;
+    line-height: 1.5;
+  }
+
+  h1,
+  h2,
+  h3,
+  p,
+  figure,
+  figcaption {
+    margin: 0;
+  }
+
+  a {
+    color: inherit;
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+  }
+
+  ::selection {
+    background: var(--accent);
+    color: var(--on-accent);
+  }
+
+  @media (max-width: 767px) {
+    :root {
+      --margin: 16px;
+    }
+  }
+
+  /* Section entrances: parts rise with opacity as their section scrolls in.
+     Without js nothing is hidden. */
+  .js [data-enter] {
+    opacity: 0;
+    transform: translateY(24px);
+    transition:
+      opacity 700ms var(--ease-expo) calc(var(--i, 0) * 80ms),
+      transform 700ms var(--ease-expo) calc(var(--i, 0) * 80ms);
+  }
+  .js [data-enter].is-in {
+    opacity: 1;
+    transform: none;
+  }
+
+  /* Masked line reveal, signature move. */
+  .lines .line {
+    display: block;
+    overflow: hidden;
+    padding-bottom: 0.08em;
+    margin-bottom: -0.08em;
+  }
+  .lines [data-line] {
+    display: block;
+  }
+  .js .lines [data-line] {
+    transform: translateY(110%);
+    animation: line-up 900ms var(--ease-expo) forwards;
+    animation-delay: calc(120ms + var(--i, 0) * 110ms);
+  }
+  @keyframes line-up {
+    to {
+      transform: none;
+    }
+  }
+
+  .js [data-fade] {
+    opacity: 0;
+    animation: fade-in 700ms ease forwards;
+    animation-delay: var(--d, 400ms);
+  }
+  @keyframes fade-in {
+    to {
+      opacity: 1;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .js .lines [data-line],
+    .js [data-fade] {
+      animation: none;
+      transform: none;
+      opacity: 1;
+    }
+    .js [data-enter] {
+      transition: none;
+      opacity: 1;
+      transform: none;
+    }
+  }
+</style>

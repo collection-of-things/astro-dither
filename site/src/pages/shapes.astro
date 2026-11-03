@@ -1,0 +1,50 @@
+---
+import Base from "../layouts/Base.astro";
+import { Dither, ditherPresets } from "astro-dither";
+
+const variants = ditherPresets.filter((preset) => preset.name !== "Sphere");
+---
+
+<Base title="astro-dither - shapes">
+  <div class="hero">
+    <Dither />
+  </div>
+  <section class="variants">
+    {
+      variants.map((preset) => (
+        <figure>
+          <div class="frame">
+            <Dither {...preset.params} />
+          </div>
+          <figcaption>{preset.name}</figcaption>
+        </figure>
+      ))
+    }
+  </section>
+</Base>
+
+<style>
+  .hero {
+    height: 70vh;
+  }
+
+  .variants {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 16px;
+    padding: 16px;
+  }
+
+  figure {
+    margin: 0;
+  }
+
+  .frame {
+    height: 220px;
+  }
+
+  figcaption {
+    margin-top: 8px;
+    font-size: 14px;
+  }
+</style>

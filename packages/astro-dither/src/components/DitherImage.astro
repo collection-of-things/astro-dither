@@ -1,0 +1,45 @@
+---
+import { imageDitherSettingsToAttribute, imageSource, type ImageDitherProps } from "../lib/image-dither";
+
+interface Props extends ImageDitherProps {
+  /** Local path, remote URL, or an Astro image import. Remote images need CORS headers. */
+  src: string | ImageMetadata;
+  /** Alt text for the photo. The `<img>` stays in the tree for screen readers. */
+  alt: string;
+  class?: string;
+}
+
+const { src, alt, class: className, ...settings } = Astro.props;
+const encoded = imageDitherSettingsToAttribute(settings);
+---
+
+<!--
+  The img is the no-JS fallback. Once it decodes, the shader mounts behind it
+  and the script fades the img out while keeping it readable by screen readers.
+-->
+<dither-image class={className} data-dither={encoded}>
+  <img src={imageSource(src)} alt={alt} crossorigin="anonymous" decoding="async" />
+</dither-image>
+
+<script>
+  import { defineImageDitherElement } from "../lib/mount-image-dither";
+
+  defineImageDitherElement();
+</script>
+
+<style>
+  dither-image {
+    display: block;
+    position: relative;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+  }
+
+  dither-image img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+</style>

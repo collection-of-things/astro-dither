@@ -1,0 +1,49 @@
+---
+import { orderedDitherAttribute } from "../lib/ordered-dither";
+import land from "../assets/land.png";
+
+interface Props {
+  class?: string;
+  src?: string;
+  lat?: number;
+  lon?: number;
+  cell?: number;
+  matrix?: 2 | 4 | 8 | "noise";
+  palette?: string[];
+}
+
+const {
+  class: className,
+  src = land.src,
+  lat = 20,
+  lon = 48,
+  cell = 2.5,
+  matrix = 4,
+  palette = ["transparent", "#f4f1ea"],
+} = Astro.props;
+
+const encoded = orderedDitherAttribute({ effect: "globe", params: { lat, lon }, src, cell, matrix, palette });
+---
+
+<dither-surface class={className} data-dither={encoded} aria-hidden="true"></dither-surface>
+
+<script>
+  import { defineOrderedDither } from "../lib/mount-ordered-dither";
+
+  defineOrderedDither();
+</script>
+
+<style>
+  dither-surface {
+    display: block;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+  }
+
+  dither-surface :global(canvas) {
+    display: block;
+    width: 100%;
+    height: 100%;
+  }
+</style>

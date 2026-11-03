@@ -1,0 +1,84 @@
+---
+import { orderedDitherAttribute } from "../lib/ordered-dither";
+import type { EffectParams } from "../lib/effects";
+
+interface Props extends EffectParams<"aurora"> {
+  class?: string;
+  /** Animation speed. 0 draws one still frame. */
+  speed?: number;
+  cell?: number;
+  matrix?: 2 | 4 | 8 | "noise";
+  /** 2 to 8 colours, dark sky first and brightest sparkle last. */
+  palette?: string[];
+}
+
+const {
+  class: className,
+  speed = 1,
+  cell = 2,
+  matrix = 8,
+  palette = ["#02060d", "#061a33", "#0b4f99", "#1f8fff", "#d6efff"],
+  curtains,
+  height,
+  spread,
+  sway,
+  turbulence,
+  rays,
+  length,
+  glow,
+  intensity,
+  shimmer,
+  scale,
+  tilt,
+  drift,
+  direction,
+  mask,
+} = Astro.props;
+const encoded = orderedDitherAttribute({
+  effect: "aurora",
+  params: {
+    curtains,
+    height,
+    spread,
+    sway,
+    turbulence,
+    rays,
+    length,
+    glow,
+    intensity,
+    shimmer,
+    scale,
+    tilt,
+    drift,
+    direction,
+    mask,
+  },
+  speed,
+  cell,
+  matrix,
+  palette,
+});
+---
+
+<dither-surface class={className} data-dither={encoded} aria-hidden="true"></dither-surface>
+
+<script>
+  import { defineOrderedDither } from "../lib/mount-ordered-dither";
+
+  defineOrderedDither();
+</script>
+
+<style>
+  dither-surface {
+    display: block;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+  }
+
+  dither-surface :global(canvas) {
+    display: block;
+    width: 100%;
+    height: 100%;
+  }
+</style>

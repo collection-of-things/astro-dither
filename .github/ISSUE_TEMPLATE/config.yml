@@ -1,0 +1,5 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Examples
+    url: https://astro-dither.vercel.app/examples
+    about: Live demos of every component and effect before you file.

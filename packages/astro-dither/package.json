@@ -1,0 +1,61 @@
+{
+  "name": "astro-dither",
+  "version": "0.1.0",
+  "description": "Animated dither backgrounds, gradients and image effects for Astro. No React.",
+  "type": "module",
+  "license": "MIT",
+  "keywords": ["astro-component", "withastro", "dither", "webgl", "shader", "aurora", "gradient"],
+  "author": "Screen",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/screen-gd/astro-dither.git",
+    "directory": "packages/astro-dither"
+  },
+  "homepage": "https://astro-dither.vercel.app",
+  "bugs": "https://github.com/screen-gd/astro-dither/issues",
+  "sideEffects": [
+    "src/lib/mount-dither.ts",
+    "src/lib/mount-image-dither.ts",
+    "src/lib/mount-ordered-dither.ts"
+  ],
+  "bin": {
+    "astro-dither": "./bin/cli.mjs"
+  },
+  "exports": {
+    ".": "./src/index.ts",
+    "./Dither.astro": "./src/components/Dither.astro",
+    "./DitherImage.astro": "./src/components/DitherImage.astro",
+    "./DitherGradient.astro": "./src/components/DitherGradient.astro",
+    "./DitherAurora.astro": "./src/components/DitherAurora.astro",
+    "./DitherEffect.astro": "./src/components/DitherEffect.astro",
+    "./DitherGlobe.astro": "./src/components/DitherGlobe.astro",
+    "./effects": "./src/lib/effects.ts"
+  },
+  "files": [
+    "src",
+    "bin",
+    "!src/**/*.test.ts",
+    "README.md",
+    "LICENSE",
+    "CHANGELOG.md"
+  ],
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "test": "vitest run",
+    "check": "astro check"
+  },
+  "dependencies": {
+    "@paper-design/shaders": "0.0.82"
+  },
+  "peerDependencies": {
+    "astro": ">=5"
+  },
+  "devDependencies": {
+    "@astrojs/check": "^0.9.12",
+    "astro": "^7.4.4",
+    "typescript": "^6.0.3",
+    "vitest": "^5.0.5"
+  }
+}

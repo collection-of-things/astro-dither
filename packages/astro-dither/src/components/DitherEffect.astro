@@ -1,0 +1,41 @@
+---
+import { orderedDitherAttribute } from "../lib/ordered-dither";
+import type { EffectName, EffectParams } from "../lib/effects";
+
+interface Props<E extends EffectName = EffectName> {
+  effect: E;
+  /** Numeric knobs for this effect. Unknown keys are dropped. */
+  params?: EffectParams<E>;
+  palette?: string[];
+  cell?: number;
+  matrix?: 2 | 4 | 8 | "noise";
+  speed?: number;
+  class?: string;
+}
+
+const { class: className, effect, params, palette, cell, matrix, speed } = Astro.props;
+const encoded = orderedDitherAttribute({ effect, params, palette, cell, matrix, speed });
+---
+
+<dither-surface class={className} data-dither={encoded} aria-hidden="true"></dither-surface>
+
+<script>
+  import { defineOrderedDither } from "../lib/mount-ordered-dither";
+
+  defineOrderedDither();
+</script>
+
+<style>
+  dither-surface {
+    display: block;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+  }
+
+  dither-surface :global(canvas) {
+    display: block;
+    width: 100%;
+    height: 100%;
+  }
+</style>

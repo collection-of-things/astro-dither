@@ -1,0 +1,17 @@
+{
+  "name": "astro-dither-monorepo",
+  "private": true,
+  "type": "module",
+  "packageManager": "pnpm@12.11.2",
+  "engines": {
+    "node": ">=22.23.4"
+  },
+  "scripts": {
+    "dev": "pnpm --filter astro-dither-site run dev",
+    "build": "pnpm --filter astro-dither-site run build",
+    "preview": "pnpm --filter astro-dither-site run preview",
+    "test": "pnpm --filter astro-dither run test",
+    "check": "pnpm --filter astro-dither run check && pnpm --filter astro-dither-site run check",
+    "ci": "pnpm test && pnpm check && pnpm build"
+  }
+}

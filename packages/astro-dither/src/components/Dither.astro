@@ -1,0 +1,32 @@
+---
+import { ditherSettingsToAttribute, type DitherProps } from "../lib/dither";
+
+interface Props extends DitherProps {
+  class?: string;
+}
+
+const { class: className, ...settings } = Astro.props;
+const encoded = ditherSettingsToAttribute(settings);
+---
+
+<!--
+  Fills its parent. The shader runs in the browser from the script below.
+  Paper pauses the loop when the element is off screen or the tab is hidden.
+-->
+<dither-canvas class={className} data-dither={encoded} aria-hidden="true"></dither-canvas>
+
+<script>
+  import { defineDitherElement } from "../lib/mount-dither";
+
+  defineDitherElement();
+</script>
+
+<style>
+  dither-canvas {
+    display: block;
+    position: relative;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+  }
+</style>

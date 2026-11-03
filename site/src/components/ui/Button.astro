@@ -1,0 +1,102 @@
+---
+import type { HTMLAttributes } from "astro/types";
+
+interface Props extends HTMLAttributes<"button">, Omit<HTMLAttributes<"a">, "type"> {
+  variant?: "primary" | "secondary" | "outline" | "ghost";
+  size?: "sm" | "md" | "lg";
+  href?: string;
+}
+
+const { variant = "primary", size = "md", href, class: className, ...rest } = Astro.props;
+const Tag = href ? "a" : "button";
+---
+
+<Tag class:list={["btn", `v-${variant}`, `s-${size}`, className]} data-slot="button" {...rest}>
+  <slot />
+</Tag>
+
+<style>
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    border-radius: 999px;
+    border: 1px solid transparent;
+    font-family: inherit;
+    font-weight: 500;
+    white-space: nowrap;
+    text-decoration: none;
+    cursor: pointer;
+    transition:
+      filter var(--t-hover, 200ms) ease,
+      background var(--t-hover, 200ms) ease,
+      border-color var(--t-hover, 200ms) ease,
+      color var(--t-hover, 200ms) ease;
+  }
+  .btn :global(svg) {
+    pointer-events: none;
+    flex: none;
+  }
+  .btn:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(0, 178, 255, 0.5);
+  }
+  .btn[disabled] {
+    pointer-events: none;
+    opacity: 0.5;
+  }
+  .btn:active {
+    filter: brightness(0.9);
+  }
+
+  .v-primary {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: var(--on-accent);
+  }
+  .v-primary:hover {
+    filter: brightness(1.12);
+  }
+  .v-secondary {
+    background: #16181c;
+    border-color: #16181c;
+    color: var(--ink);
+  }
+  .v-secondary:hover {
+    background: #1c1f24;
+  }
+  .v-outline {
+    background: var(--card);
+    border-color: var(--line);
+    color: var(--ink);
+  }
+  .v-outline:hover {
+    background: #14161a;
+    border-color: #262a31;
+  }
+  .v-ghost {
+    background: transparent;
+    color: var(--muted);
+  }
+  .v-ghost:hover {
+    background: var(--line);
+    color: var(--ink);
+  }
+
+  .s-sm {
+    height: 36px;
+    padding: 0 16px;
+    font-size: 14px;
+  }
+  .s-md {
+    height: 44px;
+    padding: 0 20px;
+    font-size: 15px;
+  }
+  .s-lg {
+    height: 48px;
+    padding: 0 32px;
+    font-size: 17px;
+  }
+</style>

@@ -1,0 +1,318 @@
+---
+import Base from "../layouts/Base.astro";
+import { Dither, DitherAurora, DitherEffect, DitherGlobe, DitherGradient, DitherImage, ditherPresets } from "astro-dither";
+---
+
+<Base title="astro-dither - examples">
+  <main>
+    <h1>Examples</h1>
+
+    <section>
+      <h2>Images</h2>
+      <div class="grid">
+        <figure>
+          <div class="tile">
+            <DitherImage
+              src="/examples/portrait.jpg"
+              alt="Portrait"
+              colorBack="#000000"
+              colorFront="#f4f1ea"
+              colorHighlight="#f4f1ea"
+              type="8x8"
+            />
+          </div>
+          <figcaption>Two colour</figcaption>
+        </figure>
+        <figure>
+          <div class="tile">
+            <DitherImage
+              src="/examples/landscape.jpg"
+              alt="Landscape"
+              colorBack="#000c38"
+              colorFront="#14b87a"
+              colorHighlight="#eaff94"
+              type="8x8"
+            />
+          </div>
+          <figcaption>Highlight</figcaption>
+        </figure>
+        <figure>
+          <div class="tile">
+            <DitherImage src="/examples/landscape.jpg" alt="Landscape" originalColors={true} colorSteps={4} size={3} />
+          </div>
+          <figcaption>Original</figcaption>
+        </figure>
+        <figure>
+          <div class="tile">
+            <DitherImage
+              src="/examples/portrait.jpg"
+              alt="Portrait"
+              colorBack="#f4f1ea"
+              colorFront="#000000"
+              colorHighlight="#000000"
+              type="8x8"
+              inverted={true}
+            />
+          </div>
+          <figcaption>Inverted</figcaption>
+        </figure>
+        <figure>
+          <div class="tile">
+            <DitherImage
+              src="/examples/landscape.jpg"
+              alt="Landscape"
+              colorBack="#000000"
+              colorFront="#f4f1ea"
+              colorHighlight="#f4f1ea"
+              type="random"
+              size={1.5}
+            />
+          </div>
+          <figcaption>Grain</figcaption>
+        </figure>
+      </div>
+    </section>
+
+    <section>
+      <h2>Gradients</h2>
+      <div class="grid">
+        <figure>
+          <div class="tile"><DitherGradient mode="linear" /></div>
+          <figcaption>Linear</figcaption>
+        </figure>
+        <figure>
+          <div class="tile"><DitherGradient mode="radial" /></div>
+          <figcaption>Radial</figcaption>
+        </figure>
+        <figure>
+          <div class="tile"><DitherGradient mode="conic" /></div>
+          <figcaption>Conic</figcaption>
+        </figure>
+        <figure>
+          <div class="tile">
+            <DitherGradient mode="linear" angle={0} palette={["#1b1035", "#c62d42", "#f4884a", "#f4e9d4"]} />
+          </div>
+          <figcaption>Sunset</figcaption>
+        </figure>
+        <figure>
+          <div class="tile"><DitherGradient mode="linear" speed={0.5} /></div>
+          <figcaption>Drifting</figcaption>
+        </figure>
+        <figure>
+          <div class="tile"><DitherGradient mode="conic" speed={0.5} /></div>
+          <figcaption>Rotating</figcaption>
+        </figure>
+        <figure>
+          <div class="tile"><DitherEffect effect="glow" /></div>
+          <figcaption>Glow</figcaption>
+        </figure>
+        <figure>
+          <div class="tile"><DitherEffect effect="mesh" /></div>
+          <figcaption>Mesh</figcaption>
+        </figure>
+        <figure>
+          <div class="tile">
+            <DitherEffect effect="mesh" palette={["#000000", "#5c1208", "#d4451f", "#ffc24a"]} />
+          </div>
+          <figcaption>Ember</figcaption>
+        </figure>
+      </div>
+    </section>
+
+    <section id="aurora">
+      <h2>Effects</h2>
+      <div class="grid">
+        <figure class="wide">
+          <div class="tile wide-tile"><DitherAurora /></div>
+          <figcaption>Aurora</figcaption>
+        </figure>
+        <figure>
+          <div class="tile">
+            <DitherAurora
+              palette={["#02080a", "#062a22", "#0f8a5f", "#3fe0a0", "#e6fff4"]}
+              curtains={4}
+              height={0.28}
+              spread={0.08}
+              sway={1.6}
+              rays={11}
+              length={0.7}
+              tilt={-6}
+              drift={0.5}
+            />
+          </div>
+          <figcaption>Northern</figcaption>
+        </figure>
+        <figure>
+          <div class="tile"><DitherAurora direction={-1} height={0.14} curtains={2} rays={5} cell={4} matrix={4} /></div>
+          <figcaption>Flipped</figcaption>
+        </figure>
+        <figure>
+          <div class="tile">
+            <DitherAurora palette={["#06030f", "#1d0e3d", "#5c2ba8", "#a55cff", "#f0dcff"]} mask={3} />
+          </div>
+          <figcaption>Violet</figcaption>
+        </figure>
+        <figure>
+          <div class="tile"><DitherEffect effect="noise" /></div>
+          <figcaption>Noise</figcaption>
+        </figure>
+        <figure>
+          <div class="tile"><DitherEffect effect="waves" /></div>
+          <figcaption>Waves</figcaption>
+        </figure>
+        <figure>
+          <div class="tile"><DitherEffect effect="plasma" /></div>
+          <figcaption>Plasma</figcaption>
+        </figure>
+        <figure>
+          <div class="tile"><DitherEffect effect="beams" /></div>
+          <figcaption>Beams</figcaption>
+        </figure>
+        <figure>
+          <div class="tile"><DitherEffect effect="silk" /></div>
+          <figcaption>Silk</figcaption>
+        </figure>
+        <figure>
+          <div class="tile"><DitherEffect effect="smoke" /></div>
+          <figcaption>Smoke</figcaption>
+        </figure>
+        <figure>
+          <div class="tile"><DitherEffect effect="contours" /></div>
+          <figcaption>Contours</figcaption>
+        </figure>
+        <figure>
+          <div class="tile"><DitherEffect effect="ripples" /></div>
+          <figcaption>Ripples</figcaption>
+        </figure>
+        <figure>
+          <div class="tile"><DitherEffect effect="metaballs" /></div>
+          <figcaption>Metaballs</figcaption>
+        </figure>
+        <figure>
+          <div class="tile"><DitherEffect effect="tunnel" /></div>
+          <figcaption>Tunnel</figcaption>
+        </figure>
+        <figure>
+          <div class="tile"><DitherEffect effect="retro-grid" /></div>
+          <figcaption>Retro grid</figcaption>
+        </figure>
+        <figure>
+          <div class="tile"><DitherEffect effect="starfield" /></div>
+          <figcaption>Starfield</figcaption>
+        </figure>
+        <figure>
+          <div class="tile"><DitherEffect effect="eclipse" /></div>
+          <figcaption>Eclipse</figcaption>
+        </figure>
+      </div>
+    </section>
+
+    <section>
+      <h2>Matrices</h2>
+      <div class="grid">
+        <figure>
+          <div class="tile"><DitherEffect effect="plasma" matrix={2} /></div>
+          <figcaption>2x2</figcaption>
+        </figure>
+        <figure>
+          <div class="tile"><DitherEffect effect="plasma" matrix={4} /></div>
+          <figcaption>4x4</figcaption>
+        </figure>
+        <figure>
+          <div class="tile"><DitherEffect effect="plasma" matrix={8} /></div>
+          <figcaption>8x8</figcaption>
+        </figure>
+        <figure>
+          <div class="tile"><DitherEffect effect="plasma" matrix="noise" /></div>
+          <figcaption>Noise</figcaption>
+        </figure>
+      </div>
+    </section>
+
+    <section>
+      <h2>Shapes</h2>
+      <div class="grid">
+        {
+          ditherPresets.map((preset) => (
+            <figure>
+              <div class="tile">
+                <Dither {...preset.params} />
+              </div>
+              <figcaption>{preset.name}</figcaption>
+            </figure>
+          ))
+        }
+      </div>
+    </section>
+
+    <section>
+      <h2>Globe</h2>
+      <div class="grid">
+        <figure>
+          <div class="tile square-tile"><DitherGlobe /></div>
+          <figcaption>Globe</figcaption>
+        </figure>
+      </div>
+    </section>
+  </main>
+</Base>
+
+<style>
+  main {
+    padding: 24px;
+  }
+
+  h1 {
+    margin: 0 0 8px;
+    font-size: 20px;
+    font-weight: 500;
+  }
+
+  h2 {
+    margin: 32px 0 12px;
+    font-size: 15px;
+    font-weight: 500;
+    color: #b8b8b8;
+  }
+
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 16px;
+  }
+
+  figure {
+    margin: 0;
+  }
+
+  .tile {
+    position: relative;
+    aspect-ratio: 16/10;
+    border-radius: 10px;
+    overflow: hidden;
+  }
+
+  .tile > * {
+    position: absolute;
+    inset: 0;
+  }
+
+  .wide {
+    grid-column: 1 / -1;
+  }
+
+  .wide-tile {
+    aspect-ratio: 21/9;
+  }
+
+  .square-tile {
+    aspect-ratio: 1;
+    max-width: 340px;
+  }
+
+  figcaption {
+    margin-top: 8px;
+    font-size: 13px;
+    color: #9a9a9a;
+  }
+</style>
