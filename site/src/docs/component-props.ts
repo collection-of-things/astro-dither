@@ -57,7 +57,7 @@ export const SHARED = {
     ...SHARED_EFFECT,
   ],
   effect: [
-    { name: "effect", type: "EffectName", def: "required", desc: "One of the 18 registry names." },
+    { name: "effect", type: "EffectName", def: "required", desc: "One of the 19 registry names." },
     { name: "params", type: "Record<string, number>", def: "{}", desc: "The effect's own settings, typed per effect." },
     ...SHARED_EFFECT,
     { name: "src", type: "string", def: "undefined", desc: "Image texture for effects that sample one (globe)." },

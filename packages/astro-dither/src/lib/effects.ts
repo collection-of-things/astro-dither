@@ -135,6 +135,21 @@ float field(vec2 uv, vec2 res, float t) {
 }
 `;
 
+const RISE_FIELD = /* glsl */ `
+float field(vec2 uv, vec2 res, float t) {
+  float aspect = res.x / res.y;
+  float x = uv.x * aspect;
+  float edge = p_height
+    + p_wave * sin(x * 4.0 - t * 0.35)
+    + (fbm(vec2(x * 2.5 - t * 0.12, t * 0.05)) - 0.5) * p_grain;
+  float d = edge - uv.y;
+  float tone = smoothstep(-0.3, 0.45, d);
+  float speckle = vnoise(vec2(x * 28.0, uv.y * 28.0 - t * 0.25));
+  tone = clamp(tone - speckle * 0.3 * smoothstep(0.55, 0.95, tone), 0.0, 1.0);
+  return tone;
+}
+`;
+
 const PLASMA_FIELD = /* glsl */ `
 float field(vec2 uv, vec2 res, float t) {
   float aspect = res.x / res.y;
@@ -518,6 +533,18 @@ export const effects = {
     ranges: { radius: { min: 0.05, max: 0.45, step: 0.01 } },
     stillTime: 4,
     palette: ["#000000", "#1a0f2e", "#6b3fa0", "#ffb36b", "#fff3d6"],
+    speed: 1,
+  },
+  rise: {
+    field: RISE_FIELD,
+    params: { height: 0.72, wave: 0.05, grain: 0.3 },
+    ranges: {
+      height: { min: 0, max: 1, step: 0.01 },
+      wave: { min: 0, max: 0.2, step: 0.005 },
+      grain: { min: 0, max: 0.6, step: 0.01 },
+    },
+    stillTime: 3,
+    palette: ["#000000", "#061a33", "#0b4f99", "#00b2ff", "#d6efff"],
     speed: 1,
   },
   globe: {

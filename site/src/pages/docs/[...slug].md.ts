@@ -31,7 +31,7 @@ export const GET: APIRoute = async ({ props }) => {
     const doc = COMPONENT_DOCS.find((c) => c.slug === id);
     body = doc ? componentMarkdown(doc.title, doc.description, doc.usage, doc.intro, doc.rows) : "";
   } else {
-    body = `# Effect catalog\n\nAll 18 effects, live. Browse them at /docs/effects.\n`;
+    body = `# Effect catalog\n\nAll 19 effects, live. Browse them at /docs/effects.\n`;
   }
   return new Response(body, { headers: { "Content-Type": "text/markdown" } });
 };

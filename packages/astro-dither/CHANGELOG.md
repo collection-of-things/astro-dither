@@ -5,7 +5,7 @@
 First public release.
 
 - Six components: `Dither`, `DitherImage`, `DitherGradient`, `DitherAurora`, `DitherGlobe`, `DitherEffect`.
-- Eighteen effects in one registry: gradient, glow, mesh, beams, noise, plasma, waves, silk, smoke, contours, ripples, metaballs, tunnel, retro-grid, aurora, starfield, eclipse, globe.
+- Nineteen effects in one registry: gradient, glow, mesh, beams, noise, plasma, waves, silk, smoke, contours, ripples, metaballs, tunnel, retro-grid, aurora, starfield, eclipse, globe, rise.
 - One shared WebGL context for every ordered-dither surface on a page; `DitherImage` uses its own context per image.
 - Bayer 2x2, 4x4, 8x8 and noise matrices, 2 to 8 colour palettes, per-effect typed params.
 - Surfaces pause offscreen and in hidden tabs, respect prefers-reduced-motion, and `DitherImage` keeps the real `img` and its alt text.

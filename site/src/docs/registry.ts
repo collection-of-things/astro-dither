@@ -470,6 +470,31 @@ export const EFFECTS: EffectDoc[] = [
     ],
     notes: [],
   },
+  {
+    slug: "rise",
+    title: "Rise",
+    group: "Gradients and glows",
+    description: "A vertical ramp whose top edge waves and drifts, dark above to bright below.",
+    intro:
+      "A colour field that rises from the bottom of the surface. `height` sets where the edge sits, `wave` gives it a slow sine sway, and `grain` roughens it with fractal noise. Above the edge the tone drops to the first palette colour; below it the ramp reaches the brightest stops, with specks of noise near full brightness. Made for footers and section backgrounds.",
+    propGroups: "Shape: `height`, `wave`, `grain`. Look: `palette` runs dark to bright, top to bottom. Motion: `speed` drifts the edge.",
+    usage: '<DitherEffect effect="rise" cell={4} palette={["#000000", "#00b2ff", "#d6efff"]} />',
+    examples: [
+      {
+        title: "Footer band",
+        sentence: "Chunky cells in navy to blue under a big wordmark.",
+        params: { height: 0.72, wave: 0.05, grain: 0.3 },
+        cell: 4,
+      },
+      {
+        title: "Tide line",
+        sentence: "A low edge with a stronger wave and heavy grain.",
+        params: { height: 0.45, wave: 0.14, grain: 0.55 },
+        palette: ["#020608", "#0d3a23", "#1f7a4a", "#5fd4a0", "#d9ffd0"],
+      },
+    ],
+    notes: [],
+  },
 ];
 
 export const SHARED_PROP_ROWS: PropRow[] = [
@@ -514,6 +539,11 @@ const PROP_DESCRIPTIONS: Partial<Record<EffectName, Record<string, string>>> = {
   starfield: { gain: "Overall star brightness." },
   eclipse: { radius: "Disc size relative to the surface." },
   globe: { lat: "Latitude facing the viewer, degrees.", lon: "Longitude facing the viewer, degrees." },
+  rise: {
+    height: "Where the edge sits, 0 to 1. Higher means more of the surface is bright.",
+    wave: "How far the edge sways in a slow sine.",
+    grain: "How much fractal noise roughens the edge.",
+  },
   aurora: {
     curtains: "How many curtains. Each hangs higher and dimmer.",
     height: "Where the lowest bright edge hangs, 0 to 1.",

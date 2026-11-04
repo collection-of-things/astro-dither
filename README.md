@@ -22,7 +22,7 @@ Animated dither backgrounds, gradients and image effects for Astro. No React.
 ## Features
 
 - **No React.** Plain Astro components and one custom element. Nothing to hydrate.
-- **18 effects** in one registry: aurora, waves, plasma, silk, smoke, contours, ripples, metaballs, tunnel, retro-grid, starfield, eclipse, globe, gradient, glow, mesh, beams, noise.
+- **19 effects** in one registry: aurora, waves, plasma, silk, smoke, contours, ripples, metaballs, tunnel, retro-grid, starfield, eclipse, globe, gradient, glow, mesh, beams, noise, rise.
 - **Image dithering** that keeps the real `img` and its alt text in the tree.
 - **One shared WebGL context** for every ordered-dither surface on a page, so many tiles cost about the same as one.
 - **Pauses itself** offscreen and in hidden tabs. Respects `prefers-reduced-motion`.
@@ -55,7 +55,7 @@ import { DitherAurora } from "astro-dither";
 </section>
 ```
 
-Any of the 18 effects works the same way:
+Any of the 19 effects works the same way:
 
 ```astro
 <DitherEffect effect="plasma" />
@@ -69,14 +69,14 @@ Any of the 18 effects works the same way:
 | `DitherImage` | Ordered dithering over any image. Keeps the `img` and its alt. | [API](https://github.com/screen-gd/astro-dither/tree/main/packages/astro-dither#ditherimage) |
 | `DitherGradient` | Linear, radial, conic or wave gradients. | [API](https://github.com/screen-gd/astro-dither/tree/main/packages/astro-dither#wrappers) |
 | `DitherAurora` | The aurora effect with all its knobs. | [API](https://github.com/screen-gd/astro-dither/tree/main/packages/astro-dither#wrappers) |
-| `DitherEffect` | Any of the 18 effects below, animated or still. | [API](https://github.com/screen-gd/astro-dither/tree/main/packages/astro-dither#dithereffect) |
+| `DitherEffect` | Any of the 19 effects below, animated or still. | [API](https://github.com/screen-gd/astro-dither/tree/main/packages/astro-dither#dithereffect) |
 | `DitherGlobe` | An orthographic globe dithered from a land mask. | [API](https://github.com/screen-gd/astro-dither/tree/main/packages/astro-dither#wrappers) |
 
 ## Effects
 
 | Group | Effects |
 | --- | --- |
-| Gradients and glows | `gradient`, `glow`, `mesh`, `beams` |
+| Gradients and glows | `gradient`, `glow`, `mesh`, `beams`, `rise` |
 | Textures | `noise`, `plasma`, `silk`, `smoke`, `waves` |
 | Patterns | `contours`, `ripples`, `metaballs`, `tunnel`, `retro-grid` |
 | Scenes | `aurora`, `starfield`, `eclipse`, `globe` |

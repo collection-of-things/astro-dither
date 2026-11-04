@@ -122,6 +122,7 @@ The loop pauses when the element is off screen, when the tab is hidden, and when
 | `noise` | `scale` (2.5), `warp` (1.5), `gain` (1.2) | Slow domain-warped folds |
 | `waves` | `horizon` (0.62), `gain` (1) | Layered swells under a glowing horizon |
 | `plasma` | `scale` (2) | Classic flowing plasma |
+| `rise` | `height` (0.72), `wave` (0.05), `grain` (0.3) | Vertical ramp, dark top to bright bottom, wavy drifting edge |
 | `beams` | `cx`, `cy` (0.5, 1.15), `fade` (1.6) | God rays sweeping slowly from a point |
 | `silk` | `sharp` (3), `warp` (5) | Smooth folds with bright crests |
 | `smoke` | `scale` (3), `rise` (0.15), `gain` (1.2) | Billowing upward and thinning |

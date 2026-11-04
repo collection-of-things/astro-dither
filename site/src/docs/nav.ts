@@ -44,7 +44,7 @@ export const NAV: NavSection[] = [
   {
     title: "Effects",
     collapsible: true,
-    count: 18,
+    count: 19,
     items: effectItems,
   },
   {

@@ -13,7 +13,7 @@ export const GET: APIRoute = async () => {
       desc: e.data.description,
       href: e.id === "index" ? "/docs" : `/docs/${e.id}`,
     })),
-    { title: "Catalog", section: "Effects", desc: "All 18 effects, live.", href: "/docs/effects" },
+    { title: "Catalog", section: "Effects", desc: "All 19 effects, live.", href: "/docs/effects" },
     ...EFFECTS.map((e) => ({
       title: e.title,
       section: `Effects, ${e.group}`,

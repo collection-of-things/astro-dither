@@ -12,7 +12,7 @@ astro-dither is a set of Astro components on a small WebGL engine. It draws orde
 - `Dither` renders Paper's animated dither shapes: sphere, warp, wave, ripple, swirl, dots.
 - `DitherImage` applies ordered dithering to a photograph. It keeps the real `img` and its alt text.
 - `DitherGradient`, `DitherAurora` and `DitherGlobe` are named looks with typed props.
-- `DitherEffect` renders any of the 18 effects in the registry with one consistent API.
+- `DitherEffect` renders any of the 19 effects in the registry with one consistent API.
 
 ## What you get
 

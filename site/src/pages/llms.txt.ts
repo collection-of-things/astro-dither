@@ -24,7 +24,7 @@ ${guideIds.map((id) => line(guide(id)!.data.title, id === "index" ? "/docs" : `/
 ${COMPONENT_DOCS.map((c) => line(c.title, `/docs/components/${c.slug}`, c.description)).join("\n")}`,
     `## Effects
 
-${line("Catalog", "/docs/effects", "All 18 effects, live, grouped by family.")}
+${line("Catalog", "/docs/effects", "All 19 effects, live, grouped by family.")}
 ${EFFECTS.map((e) => line(e.title, `/docs/effects/${e.slug}`, e.description)).join("\n")}`,
     `## Engine
 
