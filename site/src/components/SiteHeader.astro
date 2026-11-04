@@ -1,7 +1,7 @@
 ---
 import Menu2 from "@tabler/icons/outline/menu-2.svg";
 import SearchIcon from "@tabler/icons/outline/search.svg";
-import { GITCAFE_URL } from "../site.ts";
+import { REPO_URL } from "../site.ts";
 import Logo from "./Logo.astro";
 import { Button } from "./starwind/button";
 import Dialog from "./starwind/dialog";
@@ -57,7 +57,7 @@ function isActive(label: string): boolean {
         <span class="search-label">Search</span>
         <Kbd data-kbd>Ctrl K</Kbd>
       </Button>
-      <Button variant="ghost" size="icon-sm" class="gitcafe" href={GITCAFE_URL} target="_blank" rel="noreferrer" aria-label="Source on git.cafe" title="Source on git.cafe">
+      <Button variant="ghost" size="icon-sm" class="gitcafe" href={REPO_URL} target="_blank" rel="noreferrer" aria-label="Source on GitHub" title="Source on GitHub">
         <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 3v12" /><circle cx="18" cy="6" r="3" /><circle cx="6" cy="18" r="3" /><path d="M18 9a9 9 0 0 1-9 9" /></svg>
       </Button>
       <Button variant="primary" size="sm" href="/docs/installation" class="get-started">Get started</Button>
@@ -82,7 +82,7 @@ function isActive(label: string): boolean {
       {LINKS.map((l) => (
         <a class:list={[{ on: isActive(l.label) }]} href={l.href} data-sw-drawer-close>{l.label}</a>
       ))}
-      <a href={GITCAFE_URL} target="_blank" rel="noreferrer" data-sw-drawer-close>git.cafe</a>
+      <a href={REPO_URL} target="_blank" rel="noreferrer" data-sw-drawer-close>GitHub</a>
       <a href="/docs/installation" data-sw-drawer-close>Get started</a>
       <button class="sheet-search" type="button" data-sw-drawer-close data-sw-dialog-trigger data-sw-dialog-target-id="site-search">
         Search

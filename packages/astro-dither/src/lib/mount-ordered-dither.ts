@@ -216,10 +216,16 @@ class DitherSurface extends HTMLElement {
   private clock = 0;
   private lastTick = 0;
   private readySent = false;
+  private glCanvas: HTMLCanvasElement | undefined;
 
   connectedCallback(): void {
     const settings = parseOrderedDither(this.dataset.dither);
     this.settings = settings;
+    this.removeAttribute("data-dither-fallback");
+    this.removeAttribute("data-dither-ready");
+    this.style.removeProperty("background");
+    this.bloomCtx = undefined;
+    this.readySent = false;
     const canvas = document.createElement("canvas");
     // The canvas is sized in whole cells, so it can overhang the host by part of one; draw()
     // clips that part off. Taking it out of flow keeps it from feeding back into the host's size.
@@ -229,9 +235,11 @@ class DitherSurface extends HTMLElement {
     this.replaceChildren(canvas);
     this.ctx2d = canvas.getContext("2d") ?? undefined;
     if (this.ctx2d === undefined || getRenderer() === undefined || getProgram(settings.effect) === undefined) {
-      this.style.background = "#070707";
+      this.showFallback();
       return;
     }
+    this.glCanvas = getRenderer()?.canvas;
+    this.glCanvas?.addEventListener("webglcontextlost", this.onContextLost);
     if (settings.bloom > 0) this.bloomCtx = this.createBloom(settings);
 
     this.resizeObserver = new ResizeObserver(() => this.draw());
@@ -249,12 +257,27 @@ class DitherSurface extends HTMLElement {
     if (def.usesImage === true && settings.src !== "") {
       const image = new Image();
       image.onload = () => {
+        if (!this.isConnected) return;
         const shared = getRenderer();
-        if (shared) this.texture = createTexture(shared.gl, image);
+        try {
+          if (shared) this.texture = createTexture(shared.gl, image);
+        } catch {
+          this.showFallback();
+          return;
+        }
+        if (!this.texture) {
+          this.showFallback();
+          return;
+        }
         this.draw();
         this.updatePlayback();
       };
+      image.onerror = () => this.showFallback();
       image.src = settings.src;
+      return;
+    }
+    if (def.usesImage === true) {
+      this.showFallback();
       return;
     }
     this.draw();
@@ -271,7 +294,28 @@ class DitherSurface extends HTMLElement {
       renderer.gl.deleteTexture(this.texture);
     }
     this.texture = undefined;
+    this.glCanvas?.removeEventListener("webglcontextlost", this.onContextLost);
   }
+
+  /** Keep a visible palette preview when WebGL or the globe texture cannot draw. */
+  private showFallback(): void {
+    this.pause();
+    const colors = this.settings?.palette
+      .filter((color) => color[3] > 0)
+      .map((color) => `rgb(${color.slice(0, 3).map((value) => Math.round(value * 255)).join(" ")})`) ?? [];
+    if (colors.length < 2) colors.unshift("#00131f");
+    if (colors.length < 2) colors.push("#00b2ff");
+    this.style.background = `linear-gradient(135deg, ${colors.join(", ")})`;
+    if (this.canvas) this.canvas.style.display = "none";
+    if (this.bloomCtx) this.bloomCtx.canvas.style.display = "none";
+    this.setAttribute("data-dither-fallback", "");
+    this.removeAttribute("data-dither-ready");
+  }
+
+  private onContextLost = (): void => {
+    renderer = "failed";
+    this.showFallback();
+  };
 
   /** The bloom layer: a half-resolution copy, smoothly scaled, blurred and screened over the dither. */
   private createBloom(settings: OrderedDitherSettings): CanvasRenderingContext2D | undefined {
@@ -293,6 +337,7 @@ class DitherSurface extends HTMLElement {
   }
 
   private draw(): void {
+    if (this.hasAttribute("data-dither-fallback")) return;
     const shared = getRenderer();
     const ctx2d = this.ctx2d;
     const settings = this.settings;
@@ -380,6 +425,7 @@ class DitherSurface extends HTMLElement {
     const settings = this.settings;
     const animate =
       settings !== undefined &&
+      !this.hasAttribute("data-dither-fallback") &&
       settings.speed > 0 &&
       this.inViewport &&
       !document.hidden &&

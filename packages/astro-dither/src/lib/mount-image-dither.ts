@@ -22,6 +22,9 @@ class DitherImage extends HTMLElement {
   connectedCallback(): void {
     const img = this.querySelector("img");
     if (!(img instanceof HTMLImageElement)) return;
+    // Apply to dynamically inserted elements as well as Astro's scoped markup.
+    img.style.cssText = "display:block;position:absolute;inset:0;width:100%;height:100%;object-fit:cover";
+    this.removeAttribute("data-dither-fallback");
 
     const motion = window.matchMedia("(prefers-reduced-motion: reduce)");
     this.reducedMotion = motion;
@@ -57,17 +60,29 @@ class DitherImage extends HTMLElement {
         settings.maxPixelCount,
       );
     } catch {
+      this.showFallback();
       return;
     }
     this.shader.canvasElement.setAttribute("aria-hidden", "true");
-    this.hideImage(img);
+    this.shader.canvasElement.addEventListener("webglcontextlost", this.showFallback, { once: true });
     // The mount draws on its first rAF, queued before this one.
     requestAnimationFrame(() => {
-      if (!this.isConnected) return;
+      if (!this.isConnected || !this.shader) return;
+      this.hideImage(img);
       this.setAttribute("data-dither-ready", "");
       this.dispatchEvent(new CustomEvent("dither:ready", { bubbles: true }));
     });
   }
+
+  /** Remove Paper's partially constructed canvas and keep the full-size photograph. */
+  private showFallback = (): void => {
+    this.shader?.dispose();
+    this.shader = undefined;
+    this.querySelectorAll("canvas").forEach((canvas) => canvas.remove());
+    this.revealImage();
+    this.setAttribute("data-dither-fallback", "");
+    this.removeAttribute("data-dither-ready");
+  };
 
   private hideImage(img: HTMLImageElement): void {
     img.style.position = "absolute";
@@ -80,7 +95,9 @@ class DitherImage extends HTMLElement {
 
   private revealImage(): void {
     const img = this.querySelector("img");
-    if (img instanceof HTMLImageElement) img.removeAttribute("style");
+    if (img instanceof HTMLImageElement) {
+      img.style.cssText = "display:block;position:absolute;inset:0;width:100%;height:100%;object-fit:cover";
+    }
   }
 
   private onMotionChange = (): void => {

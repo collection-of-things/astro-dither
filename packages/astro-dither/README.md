@@ -182,7 +182,9 @@ Accepts `src` (a same-origin custom equirectangular land-mask URL), `lat` (`20`)
 
 Every component fills its parent. Ordered effects share one WebGL2 context; Paper shapes and image filters each use their own context. The loops pause offscreen and in hidden tabs. Reduced motion draws a still frame: ordered effects use `stillTime`, and Paper shapes use `frame`.
 
-Background elements are `aria-hidden`. Put meaningful text alongside them. If WebGL2 is unavailable, ordered surfaces stay blank, `Dither` uses its background colour, and `DitherImage` keeps the original photo. Every component dispatches a bubbling `dither:ready` event after drawing its first frame.
+Background elements are `aria-hidden`. Put meaningful text alongside them. If WebGL2 is unavailable or a context fails, ordered surfaces show a static palette gradient, `Dither` shows a gradient between its colours, and `DitherImage` keeps the full-size original photo. Every component dispatches a bubbling `dither:ready` event after drawing its first frame.
+
+The demo's production home page currently ships 205.8 kB of JavaScript (70.0 kB gzipped), including shared UI, static module imports and inline scripts. This measures the demo page, not the library alone. From the repository root, run `pnpm build` followed by `node scripts/measure-page-js.mjs` to measure it again. Gzip totals sum each script compressed separately.
 
 `@paper-design/shaders` is pinned because it publishes breaking changes under `0.0.x`.
 

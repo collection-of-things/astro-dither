@@ -113,7 +113,7 @@ The four ordered-dither components render `<dither-surface>` with settings seria
 
 ## Browser support and accessibility
 
-- Requires WebGL2. Where a surface cannot start it stays blank; `DitherImage` falls back to the plain `img`.
+- Requires WebGL2 for shader rendering. If it cannot start, surfaces show a static palette gradient; `DitherImage` falls back to the full-size plain `img`.
 - Backgrounds render `aria-hidden` so screen readers skip them.
 - `prefers-reduced-motion` stops animation. Ordered surfaces use `stillTime`; Paper shapes use `frame`.
 - IntersectionObserver and `visibilitychange` pause rendering offscreen and in hidden tabs.
@@ -129,6 +129,8 @@ assets/                icon and README images
 ```
 
 ## Development
+
+The production home page ships 205.8 kB of JavaScript (70.0 kB gzipped), including shared UI, static module imports and inline scripts. This is the demo page's size, not the library alone. Run `pnpm build` and `node scripts/measure-page-js.mjs` to repeat the measurement. Gzip totals sum each script compressed separately.
 
 Requires Node 22.23.4 or newer (`.nvmrc`) and pnpm (`packageManager` pins 12.11.2).
 

@@ -1,9 +1,11 @@
 import tailwindcss from "@tailwindcss/vite";
 import expressiveCode from "astro-expressive-code";
+import sitemap from "@astrojs/sitemap";
 import { defineConfig } from "astro/config";
 
 export default defineConfig({
   integrations: [
+    sitemap(),
     expressiveCode({
       themes: ["github-dark-dimmed"],
       styleOverrides: {

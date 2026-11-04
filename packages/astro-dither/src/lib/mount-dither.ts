@@ -14,8 +14,21 @@ class DitherCanvas extends HTMLElement {
   private shader: ShaderMount | undefined;
   private reducedMotion: MediaQueryList | undefined;
 
+  /** Use the component's colours when Paper cannot create or keep a context. */
+  private showFallback = (): void => {
+    const settings = parseDitherSettings(this.dataset.dither);
+    this.shader?.dispose();
+    this.shader = undefined;
+    this.querySelectorAll("canvas").forEach((canvas) => canvas.remove());
+    this.style.background = `linear-gradient(135deg, ${settings.colorBack}, ${settings.colorFront})`;
+    this.setAttribute("data-dither-fallback", "");
+    this.removeAttribute("data-dither-ready");
+  };
+
   connectedCallback(): void {
     const settings = parseDitherSettings(this.dataset.dither);
+    this.removeAttribute("data-dither-fallback");
+    this.style.removeProperty("background");
     const motion = window.matchMedia("(prefers-reduced-motion: reduce)");
     this.reducedMotion = motion;
     motion.addEventListener("change", this.onMotionChange);
@@ -31,15 +44,15 @@ class DitherCanvas extends HTMLElement {
         settings.minPixelRatio,
         settings.maxPixelCount,
       );
+      this.shader.canvasElement.addEventListener("webglcontextlost", this.showFallback, { once: true });
       // The mount draws on its first rAF, queued before this one.
       requestAnimationFrame(() => {
-        if (!this.isConnected) return;
+        if (!this.isConnected || !this.shader) return;
         this.setAttribute("data-dither-ready", "");
         this.dispatchEvent(new CustomEvent("dither:ready", { bubbles: true }));
       });
     } catch {
-      this.replaceChildren();
-      this.style.background = settings.colorBack;
+      this.showFallback();
     }
   }
 
