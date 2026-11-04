@@ -370,7 +370,9 @@ const mdPath = md ?? `${href === "/docs" ? "/docs" : href}.md`;
     border-top: 1px solid var(--line);
   }
   .pg-link {
-    min-width: 180px;
+    min-width: 0;
+    flex: 1;
+    overflow-wrap: anywhere;
     text-decoration: none;
   }
   .pg-card {

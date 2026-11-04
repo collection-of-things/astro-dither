@@ -1,5 +1,10 @@
 # Changelog
 
+## Unreleased
+
+- Show palette gradients when WebGL initialization or a context fails; retain full-size image fallbacks when Paper cannot draw.
+- Clarify that the CLI image component uses Paper's image dithering filter.
+
 ## 0.1.0 - 2026-11-04
 
 - New `astro-dither/THIRD_PARTY_NOTICES.md` export includes Paper Shaders' full Apache-2.0 LICENSE and NOTICE text. Astro consumers can import it with `?raw`; the demo displays it on `/licenses`, linked from the footer.

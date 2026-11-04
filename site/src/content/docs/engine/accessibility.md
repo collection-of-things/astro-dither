@@ -19,4 +19,4 @@ With `prefers-reduced-motion: reduce`, ordered surfaces draw one frame at `still
 
 ## Without WebGL
 
-If WebGL2 is unavailable an ordered surface renders nothing; build pages so the background is decorative. `DitherImage` still shows the plain `img`.
+If WebGL2 is unavailable, ordered surfaces show a static palette gradient. `Dither` shows a gradient between its background and foreground colours. `DitherImage` keeps the full-size plain `img`. These fallbacks also apply when a WebGL context is lost. Backgrounds remain decorative.

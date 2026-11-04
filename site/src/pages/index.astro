@@ -83,6 +83,7 @@ const STRIP = [
 ];
 
 const INSTALL_LINKS = [
+  ["View on npm", "https://www.npmjs.com/package/astro-dither"],
   ["Installation guide", "/docs/installation"],
   ["Components", "/docs/components/dither"],
   ["Write your own effect", "/docs/engine/write-your-own"],
@@ -236,14 +237,14 @@ const FOOTER_RISE = {
         <Card.Root class="why-card">
           <div class="why-vis why-js">
             <div class="why-js-rows">
-              <span class="why-js-line"><span class="why-js-k">Page JS</span><span class="why-js-v">66 kB, 21.8 kB gzipped</span></span>
+              <span class="why-js-line"><span class="why-js-k">Initial JS</span><span class="why-js-v">206.1 kB, 70.1 kB gzipped</span></span>
               <span class="why-js-line"><span class="why-js-k">React</span><span class="why-js-v dim">not installed</span></span>
               <span class="why-js-line"><span class="why-js-k">Hydration</span><span class="why-js-v dim">custom elements, no framework</span></span>
             </div>
           </div>
           <Card.Content class="why-body">
-            <h3>No React, small script.</h3>
-            <p>Plain Astro components and one custom element. Nothing to hydrate.</p>
+            <h3>No React dependency.</h3>
+            <p>Initial home scripts and static imports, including shared UI. Excludes lazy chunks loaded later.</p>
           </Card.Content>
         </Card.Root>
         <Card.Root class="why-card">
@@ -384,6 +385,14 @@ const FOOTER_RISE = {
       z-index: 2;
       padding: 0 var(--margin);
     }
+    .hero:has(:global(dither-surface[data-dither-fallback]))::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      z-index: 1;
+      background: #000b;
+      pointer-events: none;
+    }
     .hero h1 {
       font-size: clamp(2.75rem, 8vw, 6.5rem);
       font-weight: 500;
@@ -484,16 +493,17 @@ const FOOTER_RISE = {
       border-color: #262a31;
     }
     .usage-chip[data-state="on"] {
-      background: var(--line);
-      color: var(--ink);
+      background: var(--accent);
+      color: var(--on-accent);
     }
     .usage-row {
       display: grid;
-      grid-template-columns: 5fr 7fr;
+      grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
       gap: 16px;
       align-items: stretch;
     }
     .usage-code {
+      min-width: 0;
       min-height: 0;
       display: flex;
       flex-direction: column;

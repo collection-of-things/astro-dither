@@ -11,7 +11,7 @@ const SRC_ROOT = fileURLToPath(new URL("../src/", import.meta.url));
 
 const COMPONENTS = {
   aurora: { file: "components/DitherAurora.astro", description: "The aurora effect with all its knobs" },
-  image: { file: "components/DitherImage.astro", description: "Ordered dithering over any image" },
+  image: { file: "components/DitherImage.astro", description: "Paper's image dithering filter over a photo" },
   gradient: { file: "components/DitherGradient.astro", description: "Linear, radial, conic or wave gradients" },
   effect: { file: "components/DitherEffect.astro", description: "18 procedural effects; use globe for the land-mask effect" },
   globe: { file: "components/DitherGlobe.astro", description: "An orthographic globe dithered from a land mask" },

@@ -3,6 +3,7 @@ import DocsLayout from "../../../layouts/DocsLayout.astro";
 import Card from "../../../components/starwind/card";
 import { DitherEffect, DitherGlobe } from "astro-dither";
 import { EFFECTS, EFFECT_GROUP_ORDER } from "../../../docs/registry";
+const toc = EFFECT_GROUP_ORDER.map((text) => ({ text, depth: 2, slug: text.toLowerCase().replaceAll(" ", "-") }));
 ---
 
 <DocsLayout
@@ -10,11 +11,12 @@ import { EFFECTS, EFFECT_GROUP_ORDER } from "../../../docs/registry";
   description="All 19 effects in the registry, live. Each links to its own page."
   href="/docs/effects"
   md="/docs/effects.md"
+  toc={toc}
 >
   {
     EFFECT_GROUP_ORDER.map((group) => (
       <>
-        <h2>{group}</h2>
+        <h2 id={toc.find((heading) => heading.text === group)?.slug}>{group}</h2>
         <div class="catalog">
           {EFFECTS.filter((e) => e.group === group).map((e) => (
             <a class="cat-link" href={`/docs/effects/${e.slug}`}>
