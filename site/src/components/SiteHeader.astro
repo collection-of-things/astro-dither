@@ -2,6 +2,7 @@
 import pkg from "../../../packages/astro-dither/package.json";
 import { GITCAFE_URL } from "../site.ts";
 import Button from "./ui/Button.astro";
+import Logo from "./Logo.astro";
 
 const path = Astro.url.pathname.replace(/\/+$/, "") || "/";
 const isLanding = path === "/";
@@ -34,7 +35,7 @@ function isActive(label: string): boolean {
 <header class="site-head" data-solid={isLanding ? "0" : "1"} data-landing={isLanding ? "1" : "0"}>
   <nav class="site-nav" aria-label="Site">
     <a class="brand" href="/">
-      <img src="/favicon.svg" width="26" height="26" alt="" />
+      <Logo size={28} />
       <span class="brand-name">astro-dither</span>
       <span class="ver">v{pkg.version}</span>
     </a>
@@ -145,12 +146,11 @@ function isActive(label: string): boolean {
     font-weight: 600;
   }
   .ver {
-    font-size: 12px;
-    font-family: "Geist Mono", ui-monospace, monospace;
+    font-size: 11px;
     color: var(--muted);
-    border: 1px solid var(--line);
+    background: #16181c;
     border-radius: 6px;
-    padding: 1px 6px;
+    padding: 2px 6px;
   }
   .links {
     display: flex;
