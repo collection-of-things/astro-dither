@@ -1,6 +1,6 @@
 ---
 import Base from "../layouts/Base.astro";
-import { DitherAurora, DitherEffect, DitherGradient } from "astro-dither";
+import { DitherAurora, DitherEffect, DitherGradient, DitherImage } from "astro-dither";
 import Button from "../components/ui/Button.astro";
 import CopyButton from "../components/ui/CopyButton.astro";
 import Snippet from "../components/ui/Snippet.astro";
@@ -45,7 +45,7 @@ const USAGE_ITEMS: UsageItem[] = [
     el: "dither-image",
     data: { colorFront: "#00b2ff", colorHighlight: "#d6efff" },
     img: '<img src="/examples/landscape.jpg" alt="A dithered landscape" crossorigin="anonymous" decoding="async" />',
-    code: '---\nimport { DitherImage } from "astro-dither";\n---\n\n<DitherImage src="/examples/landscape.jpg" alt="A dithered landscape" />',
+    code: '---\nimport { DitherImage } from "astro-dither";\n---\n\n<DitherImage\n  src="/examples/landscape.jpg"\n  alt="A dithered landscape"\n/>',
   },
 ];
 
@@ -170,6 +170,9 @@ const wordmarkMask =
         <div class="usage-live card" id="usage-live">
           <DitherAurora />
         </div>
+      </div>
+      <div hidden aria-hidden="true">
+        <DitherImage src="/examples/landscape.jpg" alt="" />
       </div>
     </section>
 
@@ -323,9 +326,6 @@ const wordmarkMask =
   </footer>
 
   <style>
-    main {
-      overflow: hidden;
-    }
     .container {
       max-width: 1200px;
       margin: 0 auto;
@@ -486,14 +486,19 @@ const wordmarkMask =
       background: var(--line);
       color: var(--ink);
     }
+    @media (min-width: 1368px) {
+      #usage {
+        margin: 0 calc((1320px - 100%) / -2);
+      }
+    }
     .usage-row {
       display: grid;
-      grid-template-columns: 1fr 1fr;
+      grid-template-columns: 5fr 7fr;
       gap: 16px;
       align-items: stretch;
     }
     .usage-code {
-      min-height: 420px;
+      min-height: 0;
     }
     .file-bar {
       display: flex;
@@ -532,15 +537,22 @@ const wordmarkMask =
       line-height: 1.7;
     }
     .usage-live {
-      min-height: 420px;
+      aspect-ratio: 4 / 3;
       position: relative;
+      overflow: hidden;
     }
-    .usage-live > * {
+    :global(.usage-live > *) {
       position: absolute;
       inset: 0;
       width: 100%;
       height: 100%;
       display: block;
+    }
+    :global(.usage-live dither-image > img) {
+      display: block;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
     }
 
     /* ---------- B. Effects filmstrip ---------- */
@@ -909,10 +921,6 @@ const wordmarkMask =
       }
       .usage-row {
         grid-template-columns: 1fr;
-      }
-      .usage-code,
-      .usage-live {
-        min-height: 340px;
       }
       .how-cols {
         grid-template-columns: 1fr;
