@@ -2,6 +2,7 @@
 
 ## 0.1.0 - 2026-11-04
 
+- New `astro-dither/THIRD_PARTY_NOTICES.md` export includes Paper Shaders' full Apache-2.0 LICENSE and NOTICE text. Astro consumers can import it with `?raw`; the demo displays it on `/licenses`, linked from the footer.
 - `DitherAurora` takes `color`, `tipColor` and `background` (hex) and builds its palette from them, and accepts `direction="up" | "down"` and `mask="none" | "top" | "bottom" | "edges"`. Its default `spread` is now 0.11.
 - New `levels` (snap tones before dithering) and `stillTime` settings on every ordered effect. `auroraPalette` is exported.
 - New `bloom` and `bloomRadius` settings on every ordered effect (`DitherEffect`, `DitherGradient`, `DitherAurora`, `DitherGlobe`): a blurred copy of each frame screened on top, so lit cells bloom. CSS `--dither-bloom` and `--dither-bloom-radius` override them, so a hover rule can brighten the bloom.
