@@ -2,7 +2,7 @@ import { readFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { gzipSync } from "node:zlib";
 
-// Measure the home page's module scripts and static imports, counting each asset once.
+// Measure initial home scripts and their static imports once; exclude lazy dynamic imports.
 const dist = resolve("site/dist");
 const html = readFileSync(resolve(dist, "index.html"), "utf8");
 const files = new Set();
@@ -30,4 +30,4 @@ for (const match of html.matchAll(/<script\b([^>]*)>([\s\S]*?)<\/script>/g)) {
   }
 }
 
-console.log(JSON.stringify({ bytes, gzip, modules: files.size, kB: (bytes / 1000).toFixed(1), gzipKB: (gzip / 1000).toFixed(1) }));
+console.log(JSON.stringify({ scope: "initial-static", bytes, gzip, modules: files.size, kB: (bytes / 1000).toFixed(1), gzipKB: (gzip / 1000).toFixed(1) }));

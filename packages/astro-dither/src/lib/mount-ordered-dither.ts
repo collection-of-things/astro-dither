@@ -300,12 +300,14 @@ class DitherSurface extends HTMLElement {
   /** Keep a visible palette preview when WebGL or the globe texture cannot draw. */
   private showFallback(): void {
     this.pause();
-    const colors = this.settings?.palette
-      .filter((color) => color[3] > 0)
-      .map((color) => `rgb(${color.slice(0, 3).map((value) => Math.round(value * 255)).join(" ")})`) ?? [];
-    if (colors.length < 2) colors.unshift("#00131f");
-    if (colors.length < 2) colors.push("#00b2ff");
-    this.style.background = `linear-gradient(135deg, ${colors.join(", ")})`;
+    const settings = this.settings;
+    if (!settings) return;
+    const colors = settings.palette.map((color) =>
+      `rgb(${color.slice(0, 3).map((value) => Math.round(value * 255)).join(" ")} / ${color[3]})`,
+    );
+    this.style.background = settings.effect === "globe"
+      ? `radial-gradient(circle closest-side, ${colors.join(", ")}, transparent 100%)`
+      : `linear-gradient(135deg, ${colors.join(", ")})`;
     if (this.canvas) this.canvas.style.display = "none";
     if (this.bloomCtx) this.bloomCtx.canvas.style.display = "none";
     this.setAttribute("data-dither-fallback", "");
