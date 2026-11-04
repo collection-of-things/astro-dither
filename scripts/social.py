@@ -9,6 +9,7 @@ import re
 import struct
 import json
 import subprocess
+import sys
 
 import moderngl
 from PIL import Image, ImageDraw, ImageFont
@@ -26,9 +27,17 @@ def glsl(source, name):
     return match[1].replace('#version 300 es', '#version 330').replace('precision mediump float;', '')
 
 
+def standalone_context():
+    """Use EGL on headless Linux; retain the native backend elsewhere."""
+    backend = os.environ.get('SOCIAL_GL_BACKEND')
+    if not backend and sys.platform.startswith('linux') and not os.environ.get('DISPLAY'):
+        backend = 'egl'
+    return moderngl.create_standalone_context(require=330, **({'backend': backend} if backend else {}))
+
+
 def aurora():
     """Freeze DitherAurora at a chosen moment with the shared dither engine."""
-    ctx = moderngl.create_standalone_context()
+    ctx = standalone_context()
     params = dict(curtains=3, height=.42, spread=.13, sway=1.4, turbulence=.6,
                   rays=8, length=.65, glow=1.4, intensity=1, shimmer=.2,
                   scale=.8, tilt=-32, drift=0, direction=1, mask=0)
@@ -77,7 +86,7 @@ def gallery():
         "import {effects} from './packages/astro-dither/src/lib/effects.ts'; process.stdout.write(JSON.stringify(effects));",
     ], cwd=ROOT, text=True))
     sheet = Image.new('RGB', (1200, 680), 'black')
-    ctx = moderngl.create_standalone_context()
+    ctx = standalone_context()
     vertices = ctx.buffer(struct.pack('12f', -1, -1, 1, -1, -1, 1, -1, 1, 1, -1, 1, 1))
     for index, name in enumerate(['silk', 'contours', 'waves', 'plasma', 'ripples', 'eclipse']):
         effect = registry[name]

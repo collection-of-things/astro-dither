@@ -96,7 +96,7 @@ Remote images need CORS headers because the shader reads their pixels.
 
 ![Six registry effects rendered with their default settings](https://raw.githubusercontent.com/screen-gd/astro-dither/main/assets/readme/effects.jpg)
 
-One component for the whole effect engine. Each effect is a small GLSL field mapped onto a dithered palette ramp. The element fills its parent.
+One component for the 18 procedural registry effects. Use `DitherGlobe` for the nineteenth effect: it supplies the required land mask, which `DitherEffect` does not accept. Each effect is a small GLSL field mapped onto a dithered palette ramp. The element fills its parent.
 
 ```astro
 ---
@@ -122,7 +122,7 @@ import { DitherEffect } from "astro-dither";
 | `bloomRadius` | `10` | Bloom blur radius in CSS pixels |
 | `class` | None | CSS class on the custom element |
 
-Ordered palettes accept hex colours (including alpha) and `transparent`. Override bloom in CSS with `--dither-bloom` and `--dither-bloom-radius`.
+Ordered palettes accept hex colours (including alpha) and `transparent`. Set a positive `bloom` prop first (for example, `bloom={0.5}`) to create the overlay, then override it in CSS with `--dither-bloom` and `--dither-bloom-radius`. CSS variables alone have no effect when the prop remains `0`.
 
 The loop pauses offscreen and in hidden tabs. With reduced motion enabled, or `speed={0}`, it draws the effect at `stillTime` and stops.
 
@@ -176,7 +176,7 @@ Accepts `mode` (`"linear"`, `"radial"`, `"conic"`, or `"wave"`; default `"radial
 
 ### DitherGlobe
 
-Accepts `src` (a custom equirectangular land-mask URL), `lat` (`20`), `lon` (`48`), and `sea` (`0.12`). The bundled mask is used if `src` is omitted. The default palette is `["transparent", "#f4f1ea"]`, with `cell={2.5}`, `matrix={4}`, and `speed={1}`. Set `speed={0}` to hold the globe still. It stays round in rectangular containers. The mask is also exported as `astro-dither/assets/land.png`.
+Accepts `src` (a same-origin custom equirectangular land-mask URL), `lat` (`20`), `lon` (`48`), and `sea` (`0.12`). The bundled mask is used if `src` is omitted. Cross-origin mask URLs are not supported by the current loader, even if the server allows CORS. The default palette is `["transparent", "#f4f1ea"]`, with `cell={2.5}`, `matrix={4}`, and `speed={1}`. Set `speed={0}` to hold the globe still. It stays round in rectangular containers. The mask is also exported as `astro-dither/assets/land.png`.
 
 ## Runtime and accessibility
 

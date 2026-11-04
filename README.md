@@ -53,7 +53,7 @@ import { DitherAurora } from "astro-dither";
 </section>
 ```
 
-Any of the 19 registry effects works the same way:
+The 18 procedural registry effects work the same way. For the nineteenth effect, use `DitherGlobe`, which supplies the required land mask. `<DitherEffect effect="globe" />` stays blank because it does not accept a mask source.
 
 ```astro
 ---
@@ -73,7 +73,7 @@ import { DitherEffect } from "astro-dither";
 | `DitherImage` | Ordered dithering over any image. Keeps the `img` and its alt. | [API](https://github.com/screen-gd/astro-dither/tree/main/packages/astro-dither#ditherimage) |
 | `DitherGradient` | Linear, radial, conic or wave gradients. | [API](https://github.com/screen-gd/astro-dither/tree/main/packages/astro-dither#wrappers) |
 | `DitherAurora` | The aurora effect with all its knobs. | [API](https://github.com/screen-gd/astro-dither/tree/main/packages/astro-dither#wrappers) |
-| `DitherEffect` | Any of the 19 effects below, animated or still. | [API](https://github.com/screen-gd/astro-dither/tree/main/packages/astro-dither#dithereffect) |
+| `DitherEffect` | The 18 procedural effects, animated or still. Use `DitherGlobe` for the globe. | [API](https://github.com/screen-gd/astro-dither/tree/main/packages/astro-dither#dithereffect) |
 | `DitherGlobe` | A spinning, lit globe dithered from a land mask. | [API](https://github.com/screen-gd/astro-dither/tree/main/packages/astro-dither#wrappers) |
 
 ## Effects
@@ -148,7 +148,7 @@ python -m pip install -r scripts/requirements-artwork.txt
 python scripts/social.py
 ```
 
-This updates `site/public/social.png`, `assets/readme/hero.jpg`, and `assets/readme/effects.jpg`. On systems without Arial or DejaVu Sans, set `SOCIAL_FONT` and `SOCIAL_FONT_BOLD` to font file paths.
+This updates `site/public/social.png`, `assets/readme/hero.jpg`, and `assets/readme/effects.jpg`. Headless Linux uses EGL; set `SOCIAL_GL_BACKEND` to override the context backend. On systems without Arial or DejaVu Sans, set `SOCIAL_FONT` and `SOCIAL_FONT_BOLD` to font file paths.
 
 ## Deploying the site
 

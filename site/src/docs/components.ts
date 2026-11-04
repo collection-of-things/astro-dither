@@ -172,9 +172,9 @@ export const COMPONENT_DOCS: ComponentDoc[] = [
     slug: "dither-effect",
     title: "DitherEffect",
     component: "DitherEffect",
-    description: "Any of the 19 registry effects through one component.",
+    description: "The 18 procedural registry effects through one component.",
     intro:
-      "The generic surface: pick an `effect`, pass its typed `params`, and the engine does the rest. Effect pages document each field's own params.",
+      "The generic surface: pick an `effect`, pass its typed `params`, and the engine does the rest. Use DitherGlobe for the globe: it supplies the required land mask. Effect pages document each field's own params.",
     usage: '<DitherEffect effect="plasma" params={{ scale: 3 }} />',
     rows: C.effect,
     element: "dither-surface",
