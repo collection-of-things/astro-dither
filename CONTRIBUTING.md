@@ -18,8 +18,8 @@ The repo is a pnpm workspace. The library lives in `packages/astro-dither` and t
 1. Write a `field(vec2 uv, vec2 res, float t)` GLSL function in `packages/astro-dither/src/lib/effects.ts`. It returns a tone 0 to 1 (negative means transparent) and reads its params as `p_<name>` uniforms. `hash21`, `vnoise` and `fbm` helpers are provided.
 2. Add a registry entry with `params`, `stillTime`, `palette` and `speed`.
 3. Add a test in `ordered-dither.test.ts` (registry coverage runs over every entry; add a param-parse assertion for anything non-trivial).
-4. Add a row to the effects table in `packages/astro-dither/README.md`.
-5. Add a tile to `site/src/pages/examples.astro`.
+4. Update the effects tables in both READMEs and the CLI's effect count.
+5. Add the effect documentation in `site/src/docs/registry.ts`. Check the effect catalog and examples page, and update any curated lists that should include it.
 
 ## Before opening a pull request
 
@@ -30,6 +30,8 @@ pnpm build     # site build
 ```
 
 If you changed what the package ships, also run `pnpm --filter astro-dither pack` and check the tarball contents.
+
+See [RELEASING.md](RELEASING.md) for archive validation and publishing. For artwork changes, the root README describes how to regenerate the social card and effect gallery from the current shaders.
 
 ## Style
 

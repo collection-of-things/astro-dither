@@ -42,8 +42,12 @@ The component fills its parent, so give the parent a size. That is the whole set
 import { DitherEffect, DitherImage } from "astro-dither";
 ---
 
-<DitherEffect effect="contours" />
-<DitherImage src="/photo.jpg" alt="A dithered photograph" />
+<section style="height: 400px">
+  <DitherEffect effect="contours" />
+</section>
+<figure style="height: 400px">
+  <DitherImage src="/photo.jpg" alt="A dithered photograph" />
+</figure>
 ```
 
 Every component also has a per-file export if you prefer that: `astro-dither/DitherAurora.astro`, `astro-dither/DitherImage.astro`, and so on. `astro-dither/effects` exports the effect names and types for building your own registry-driven UI.

@@ -5,6 +5,8 @@ dist/
 .taste-skill/
 .vercel/
 coverage/
+.release/
+site/.vscode/
 .env
 .env.*
 !.env.example

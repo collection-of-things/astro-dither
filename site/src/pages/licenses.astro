@@ -1,0 +1,31 @@
+---
+import Base from "../layouts/Base.astro";
+import notices from "astro-dither/THIRD_PARTY_NOTICES.md?raw";
+---
+
+<Base title="Third-party licenses | astro-dither" description="Paper Shaders Apache-2.0 license and attribution notices.">
+  <main class="licenses">
+    <a href="/">&larr; Back to astro-dither</a>
+    <h1>Third-party licenses</h1>
+    <p>The demo uses Paper Shaders for animated shapes and image dithering. Its original license and attribution notices are reproduced below.</p>
+    <pre>{notices}</pre>
+  </main>
+</Base>
+
+<style>
+  .licenses {
+    max-width: 880px;
+    margin: 0 auto;
+    padding: 140px 24px 80px;
+  }
+  a { color: var(--accent); }
+  h1 { margin: 32px 0 20px; font-size: clamp(2rem, 5vw, 3rem); }
+  p { color: var(--muted); line-height: 1.7; }
+  pre {
+    margin-top: 40px;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+    font: 0.875rem/1.8 "Geist Mono", monospace;
+    color: var(--ink);
+  }
+</style>

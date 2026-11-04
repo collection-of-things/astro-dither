@@ -12,13 +12,13 @@ astro-dither is a set of Astro components on a small WebGL engine. It draws orde
 - `Dither` renders Paper's animated dither shapes: sphere, warp, wave, ripple, swirl, dots.
 - `DitherImage` applies ordered dithering to a photograph. It keeps the real `img` and its alt text.
 - `DitherGradient`, `DitherAurora` and `DitherGlobe` are named looks with typed props.
-- `DitherEffect` renders any of the 19 effects in the registry with one consistent API.
+- `DitherEffect` renders the 18 procedural effects with one consistent API. Use `DitherGlobe` for the nineteenth registry effect: it supplies the required land mask.
 
 ## What you get
 
 - One shared WebGL context for every ordered-dither surface on a page.
 - Bayer 2x2, 4x4 and 8x8 matrices, or a noise threshold.
-- Palettes of 2 to 8 CSS colours, including `transparent`.
+- Palettes of 2 to 8 hex colours, including alpha and `transparent`.
 - Surfaces pause offscreen and in hidden tabs, and respect `prefers-reduced-motion`.
 - A copy-source CLI, `npx astro-dither add`, for projects that want the code in their own repo.
 

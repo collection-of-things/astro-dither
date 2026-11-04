@@ -15,7 +15,7 @@ Backgrounds are rendered `aria-hidden`. Put real text on top of them, never insi
 
 ## Reduced motion
 
-With `prefers-reduced-motion: reduce` a surface draws one frame at the effect's still time and stops. No looping animation, no shimmering. This is per-element, so it also works when the OS setting changes while the page is open.
+With `prefers-reduced-motion: reduce`, ordered surfaces draw one frame at `stillTime` and stop. Paper-backed components (`Dither` and `DitherImage`) use their `frame` setting with playback stopped. The components also respond when the OS setting changes while the page is open.
 
 ## Without WebGL
 
