@@ -1,6 +1,6 @@
 ---
 import Base from "../layouts/Base.astro";
-import { DitherAurora, DitherEffect, DitherGradient, DitherImage } from "astro-dither";
+import { DitherAurora, DitherEffect, DitherImage } from "astro-dither";
 import Button from "../components/ui/Button.astro";
 import CopyButton from "../components/ui/CopyButton.astro";
 import Snippet from "../components/ui/Snippet.astro";
@@ -49,16 +49,27 @@ const USAGE_ITEMS: UsageItem[] = [
   },
 ];
 
+const WHY_TILES: Record<string, unknown>[] = [
+  { effect: "gradient" },
+  { effect: "glow" },
+  { effect: "mesh" },
+  { effect: "plasma" },
+  { effect: "noise" },
+  { effect: "silk" },
+  { effect: "smoke" },
+  { effect: "contours" },
+  { effect: "ripples" },
+  { effect: "metaballs" },
+  { effect: "tunnel" },
+  { effect: "starfield" },
+];
+
 const STRIP = [
   {
     name: "Aurora",
     slug: "aurora",
-    data: {
-      effect: "aurora",
-      params: { curtains: 5, rays: 12, length: 0.7, tilt: -6, drift: 0.4 },
-      palette: ["#010604", "#04291a", "#0f7a3a", "#4ade80", "#c4b5fd"],
-    },
-    code: '<DitherAurora curtains={5} rays={12} />',
+    data: { effect: "aurora" },
+    code: "<DitherAurora />",
   },
   { name: "Plasma", slug: "plasma", data: { effect: "plasma" }, code: '<DitherEffect effect="plasma" />' },
   { name: "Waves", slug: "waves", data: { effect: "waves" }, code: '<DitherEffect effect="waves" />' },
@@ -67,34 +78,6 @@ const STRIP = [
   { name: "Retro grid", slug: "retro-grid", data: { effect: "retro-grid" }, code: '<DitherEffect effect="retro-grid" />' },
   { name: "Smoke", slug: "smoke", data: { effect: "smoke" }, code: '<DitherEffect effect="smoke" />' },
   { name: "Starfield", slug: "starfield", data: { effect: "starfield" }, code: '<DitherEffect effect="starfield" />' },
-];
-
-const BAYER = [0, 8, 2, 10, 12, 4, 14, 6, 3, 11, 1, 9, 15, 7, 13, 5];
-const BAYER_START = 6;
-
-function tilesSvg(value: number): string {
-  const dots = BAYER.map((t, i) => {
-    if (t >= value) return "";
-    const x = i % 4;
-    const y = Math.floor(i / 4);
-    const cells = [];
-    for (let tx = 0; tx < 8; tx++) {
-      for (let ty = 0; ty < 8; ty++) {
-        cells.push(`<circle cx='${x + tx * 4 + 0.5}' cy='${y + ty * 4 + 0.5}' r='0.34' fill='%2300b2ff'/>`);
-      }
-    }
-    return cells.join("");
-  }).join("");
-  const svg = `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' fill='%230b0c0e'/>${dots}</svg>`;
-  return `url("data:image/svg+xml,${svg.replace(/#/g, "%23").replace(/</g, "%3C").replace(/>/g, "%3E").replace(/"/g, "'")}")`;
-}
-
-const FACTS = [
-  ["No React", "Plain Astro components and one custom element each."],
-  ["One WebGL context", "Every ordered effect on the page shares it."],
-  ["Pauses itself", "Offscreen and in hidden tabs it stops drawing."],
-  ["Reduced motion", "Holds a still frame instead of animating."],
-  ["Real images stay", "DitherImage keeps the img and its alt text."],
 ];
 
 const INSTALL_LINKS = [
@@ -188,8 +171,7 @@ const wordmarkMask =
           </span>
         </div>
       </div>
-      <div class="strip-bleed">
-        <div class="strip" id="strip">
+      <div class="strip" id="strip">
           {STRIP.map((s) => (
             <a class="strip-item" href={`/docs/effects/${s.slug}`}>
               <span class="strip-vis">
@@ -200,60 +182,56 @@ const wordmarkMask =
             </a>
           ))}
         </div>
-      </div>
     </section>
 
-    {/* C. How ordered dithering works */}
-    <section class="section" id="how" data-enter style="--i:0">
-      <div class="how-cols">
-        <div class="how-left">
-          <h2>Built from a 4&times;4 grid of thresholds.</h2>
-          <p class="how-p">
-            Each cell compares the brightness under it to its number in the Bayer matrix and lights up if it is brighter.
-            Try it: brighter tone, more cells lit, more ink.
-          </p>
-          <p class="how-p">
-            The pattern repeats across the whole surface. The effects decide the brightness; the matrix and the palette
-            decide the look.
-          </p>
-          <ul class="how-facts">
-            {FACTS.map(([term, line]) => (
-              <li><strong>{term}</strong> {line}</li>
-            ))}
-          </ul>
+    {/* C. Why astro-dither */}
+    <section class="section" id="why" data-enter style="--i:0">
+      <div class="sec-head">
+        <h2>Made for Astro pages.</h2>
+        <div class="sec-side">
+          <p>Small, fast and accessible by default.</p>
         </div>
-        <div class="how-right" data-bayer>
-          <div class="bayer-card card">
-            <div class="bayer-fig">
-              <div class="bayer-grid" aria-hidden="true">
-                {BAYER.map((v) => (
-                  <span class:list={["bayer-cell", { lit: v < BAYER_START }]} data-b={v}>{v}</span>
-                ))}
-              </div>
-              <div class="bayer-tiles" aria-hidden="true" style={`background-image:${tilesSvg(BAYER_START)}`} />
+      </div>
+      <div class="why-grid">
+        <div class="card why-card">
+          <div class="why-vis why-js">
+            <div class="why-js-rows">
+              <span class="why-js-line"><span class="why-js-k">Page JS</span><span class="why-js-v">66 kB, 21.8 kB gzipped</span></span>
+              <span class="why-js-line"><span class="why-js-k">React</span><span class="why-js-v dim">not installed</span></span>
+              <span class="why-js-line"><span class="why-js-k">Hydration</span><span class="why-js-v dim">custom elements, no framework</span></span>
             </div>
-            <label class="bayer-ctl">
-              <span class="bayer-ctl-row">
-                Brightness
-                <output id="bayer-out">{`Brightness ${BAYER_START} / 16 · ${BAYER_START} of 16 cells lit`}</output>
-              </span>
-              <input
-                type="range"
-                min="0"
-                max="16"
-                step="1"
-                value={BAYER_START}
-                id="bayer-range"
-                aria-label="Brightness threshold"
-              />
-            </label>
-            <label class="bayer-play">
-              <input type="checkbox" id="bayer-play" />
-              Play
-            </label>
-            <p class="sr-only" id="bayer-summary">
-              A 4 by 4 Bayer matrix. At brightness 6, the 6 lowest-numbered cells light up and tile into a repeating dot pattern.
-            </p>
+          </div>
+          <div class="why-body">
+            <h3>No React, small script.</h3>
+            <p>Plain Astro components and one custom element. Nothing to hydrate.</p>
+          </div>
+        </div>
+        <div class="card why-card">
+          <div class="why-vis">
+            <div class="why-tiles">
+              {WHY_TILES.map((t) => (
+                <dither-surface data-dither={JSON.stringify(t)} aria-hidden="true" />
+              ))}
+            </div>
+            <span class="why-badge">12 surfaces · 1 WebGL context</span>
+          </div>
+          <div class="why-body">
+            <h3>Many effects, one context.</h3>
+            <p>Every effect on a page shares one WebGL context, so a page can hold dozens.</p>
+          </div>
+        </div>
+        <div class="card why-card">
+          <div class="why-vis">
+            <dither-surface data-dither='{"effect":"aurora","speed":0}' aria-hidden="true" />
+            <span class="why-chips">
+              <span class="why-chip">aria-hidden</span>
+              <span class="why-chip">Reduced motion</span>
+              <span class="why-chip">Pauses offscreen</span>
+            </span>
+          </div>
+          <div class="why-body">
+            <h3>Accessible by default.</h3>
+            <p>Backgrounds stay out of screen readers, hold still for reduced motion and stop drawing when offscreen.</p>
           </div>
         </div>
       </div>
@@ -320,14 +298,14 @@ const wordmarkMask =
     </div>
     <div class="container">
       <div class="footer-mark" aria-hidden="true" style={`mask-image: ${wordmarkMask}; -webkit-mask-image: ${wordmarkMask};`}>
-        <DitherGradient mode="linear" angle={0} palette={["#000000", "#00b2ff", "#d6efff"]} />
+        <DitherEffect effect="mesh" palette={["#02060d", "#061a33", "#0b4f99", "#00b2ff", "#d6efff"]} speed={0.6} />
       </div>
     </div>
   </footer>
 
   <style>
     .container {
-      max-width: 1200px;
+      max-width: 1320px;
       margin: 0 auto;
       padding: 0 var(--margin);
     }
@@ -486,11 +464,6 @@ const wordmarkMask =
       background: var(--line);
       color: var(--ink);
     }
-    @media (min-width: 1368px) {
-      #usage {
-        margin: 0 calc((1320px - 100%) / -2);
-      }
-    }
     .usage-row {
       display: grid;
       grid-template-columns: 5fr 7fr;
@@ -593,9 +566,6 @@ const wordmarkMask =
       opacity: 0.3;
       cursor: default;
     }
-    .strip-bleed {
-      margin-right: calc(50% - 50vw);
-    }
     .strip {
       display: flex;
       gap: 16px;
@@ -609,7 +579,7 @@ const wordmarkMask =
     }
     .strip-item {
       flex: none;
-      width: 280px;
+      width: calc((100% - 48px) / 4);
       scroll-snap-align: start;
       text-decoration: none;
     }
@@ -641,132 +611,132 @@ const wordmarkMask =
       color: var(--ink);
     }
     .strip-code {
-      display: block;
+      display: -webkit-box;
+      -webkit-box-orient: vertical;
+      -webkit-line-clamp: 2;
       margin-top: 4px;
       font-family: "Geist Mono", ui-monospace, monospace;
       font-size: 13px;
+      line-height: 1.5;
       color: var(--muted);
-      white-space: nowrap;
       overflow: hidden;
-      text-overflow: ellipsis;
     }
 
-    /* ---------- C. Bayer explainer ---------- */
-    .how-cols {
+    /* ---------- C. Why astro-dither ---------- */
+    .why-grid {
       display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 64px;
-      align-items: start;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+      align-items: stretch;
     }
-    .how-left h2 {
-      margin-bottom: 20px;
+    .why-vis {
+      position: relative;
+      aspect-ratio: 16 / 10;
+      border-bottom: 1px solid var(--line);
+      overflow: hidden;
+      background: #050607;
     }
-    .how-p {
-      font-size: var(--step-body);
-      line-height: 1.7;
-      color: var(--muted);
-      margin: 0 0 14px;
-      max-width: 52ch;
+    .why-vis > dither-surface {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      display: block;
     }
-    .how-facts {
-      list-style: none;
-      padding: 0;
-      margin: 28px 0 0;
-    }
-    .how-facts li {
-      padding: 10px 0;
-      border-top: 1px solid var(--line);
-      font-size: 14px;
-      color: var(--muted);
-      line-height: 1.5;
-    }
-    .how-facts strong {
-      color: var(--ink);
-      font-weight: 500;
-      margin-right: 8px;
-    }
-    .how-right {
-      position: sticky;
-      top: var(--header-offset);
-    }
-    .bayer-card {
-      padding: 20px;
-    }
-    .bayer-fig {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 12px;
-      margin-bottom: 18px;
-    }
-    .bayer-grid {
+    .why-tiles {
+      position: absolute;
+      inset: 0;
       display: grid;
       grid-template-columns: repeat(4, 1fr);
-      aspect-ratio: 1;
-      border: 1px solid var(--line);
-      border-radius: 10px;
+      grid-template-rows: repeat(3, 1fr);
+      gap: 4px;
+      padding: 4px;
+    }
+    .why-tiles dither-surface {
+      display: block;
+      width: 100%;
+      height: 100%;
+      min-height: 0;
+      border-radius: 4px;
       overflow: hidden;
     }
-    .bayer-cell {
+    .why-badge {
+      position: absolute;
+      right: 8px;
+      bottom: 8px;
+      font-size: 11px;
+      font-family: "Geist Mono", ui-monospace, monospace;
+      color: var(--ink);
+      background: rgba(11, 12, 14, 0.85);
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      padding: 3px 8px;
+    }
+    .why-chips {
+      position: absolute;
+      left: 8px;
+      bottom: 8px;
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+    .why-chip {
+      font-size: 11px;
+      font-family: "Geist Mono", ui-monospace, monospace;
+      color: var(--ink);
+      background: rgba(11, 12, 14, 0.85);
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      padding: 3px 8px;
+    }
+    .why-js {
       display: flex;
       align-items: center;
       justify-content: center;
+      padding: 20px;
+    }
+    .why-js-rows {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      width: 100%;
       font-family: "Geist Mono", ui-monospace, monospace;
-      font-size: 12px;
-      color: var(--muted);
-      border: 1px solid var(--line);
-      margin: -1px 0 0 -1px;
-      transition: background 150ms ease, color 150ms ease;
-    }
-    .bayer-cell.lit {
-      background: var(--accent);
-      color: var(--on-accent);
-    }
-    .bayer-tiles {
-      aspect-ratio: 1;
-      border: 1px solid var(--line);
-      border-radius: 10px;
-      background-repeat: no-repeat;
-      background-size: cover;
-      image-rendering: pixelated;
-    }
-    .bayer-ctl {
-      display: block;
       font-size: 13px;
-      color: var(--muted);
     }
-    .bayer-ctl-row {
+    .why-js-line {
       display: flex;
       justify-content: space-between;
-      margin-bottom: 6px;
+      gap: 16px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid var(--line);
     }
-    .bayer-ctl output {
-      font-family: "Geist Mono", ui-monospace, monospace;
-      font-size: 12px;
+    .why-js-line:last-child {
+      border-bottom: 0;
+      padding-bottom: 0;
+    }
+    .why-js-k {
+      color: var(--muted);
+    }
+    .why-js-v {
+      color: var(--accent);
+      text-align: right;
+    }
+    .why-js-v.dim {
       color: var(--ink);
     }
-    .bayer-ctl input[type="range"] {
-      width: 100%;
-      accent-color: var(--accent);
+    .why-body {
+      padding: 16px 20px 20px;
     }
-    .bayer-play {
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      margin-top: 12px;
+    .why-body h3 {
+      font-size: 15px;
+      font-weight: 500;
+      color: var(--ink);
+      margin-bottom: 6px;
+    }
+    .why-body p {
       font-size: 13px;
+      line-height: 1.6;
       color: var(--muted);
-      cursor: pointer;
-    }
-    .bayer-play input {
-      accent-color: var(--accent);
-    }
-    .sr-only {
-      position: absolute;
-      width: 1px;
-      height: 1px;
-      overflow: hidden;
-      clip: rect(0 0 0 0);
-      white-space: nowrap;
     }
 
     /* ---------- D. Install band ---------- */
@@ -922,16 +892,17 @@ const wordmarkMask =
       .usage-row {
         grid-template-columns: 1fr;
       }
-      .how-cols {
+      .why-grid {
         grid-template-columns: 1fr;
-        gap: 40px;
-      }
-      .how-right {
-        position: static;
       }
       .install-band {
         grid-template-columns: 1fr;
         gap: 28px;
+      }
+    }
+    @media (max-width: 1100px) {
+      .strip-item {
+        width: calc((100% - 32px) / 2.5);
       }
     }
     @media (max-width: 640px) {
@@ -943,7 +914,7 @@ const wordmarkMask =
         align-items: stretch;
       }
       .strip-item {
-        width: 72vw;
+        width: calc((100% - 16px) / 1.2);
       }
       .install-band {
         padding: 24px;
@@ -1001,67 +972,12 @@ const wordmarkMask =
     };
     stripBtns.forEach((b) =>
       b.addEventListener("click", () => {
-        const item = strip?.querySelector(".strip-item");
-        const w = item ? (item as HTMLElement).offsetWidth + 16 : 296;
-        strip?.scrollBy({ left: w * Number(b.dataset.strip), behavior: "smooth" });
+        strip?.scrollBy({ left: (strip.clientWidth + 16) * Number(b.dataset.strip), behavior: "smooth" });
       }),
     );
     strip?.addEventListener("scroll", stripUpdate, { passive: true });
     addEventListener("resize", stripUpdate);
     stripUpdate();
-
-    // Bayer demo: slider lights cells under the threshold, play sweeps it.
-    const BAYER4 = [0, 8, 2, 10, 12, 4, 14, 6, 3, 11, 1, 9, 15, 7, 13, 5];
-    const bayerSvg = (v: number): string => {
-      let dots = "";
-      BAYER4.forEach((t, i) => {
-        if (t >= v) return;
-        const x = i % 4;
-        const y = Math.floor(i / 4);
-        for (let tx = 0; tx < 8; tx++) {
-          for (let ty = 0; ty < 8; ty++) {
-            dots += `<circle cx='${x + tx * 4 + 0.5}' cy='${y + ty * 4 + 0.5}' r='0.34' fill='%2300b2ff'/>`;
-          }
-        }
-      });
-      return `url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' fill='%230b0c0e'/>${dots}</svg>")`;
-    };
-    const bayerRoot = document.querySelector("[data-bayer]");
-    const bayerRange = document.getElementById("bayer-range") as HTMLInputElement | null;
-    const bayerOut = document.getElementById("bayer-out");
-    const bayerTiles = document.querySelector<HTMLElement>(".bayer-tiles");
-    const bayerSummary = document.getElementById("bayer-summary");
-    const bayerSet = (v: number) => {
-      const lit = BAYER4.filter((t) => t < v).length;
-      bayerRoot?.querySelectorAll<HTMLElement>(".bayer-cell").forEach((c) => {
-        c.classList.toggle("lit", Number(c.dataset.b) < v);
-      });
-      if (bayerOut) bayerOut.textContent = `Brightness ${v} / 16 · ${lit} of 16 cells lit`;
-      if (bayerTiles) bayerTiles.style.backgroundImage = bayerSvg(v);
-      if (bayerSummary) {
-        bayerSummary.textContent = `A 4 by 4 Bayer matrix. At brightness ${v}, ${lit} cells light up and tile into a repeating dot pattern.`;
-      }
-    };
-    bayerRange?.addEventListener("input", () => bayerSet(Number(bayerRange.value)));
-    const reduceMotion = matchMedia("(prefers-reduced-motion: reduce)").matches;
-    const bayerPlay = document.getElementById("bayer-play") as HTMLInputElement | null;
-    let bayerTimer: number | undefined;
-    bayerPlay?.addEventListener("change", () => {
-      if (bayerPlay.checked && !reduceMotion && bayerRange) {
-        let dir = 1;
-        bayerTimer = setInterval(() => {
-          let v = Number(bayerRange.value) + dir;
-          if (v >= 16 || v <= 0) dir = -dir;
-          v = Math.max(0, Math.min(16, v));
-          bayerRange.value = String(v);
-          bayerSet(v);
-        }, 120) as unknown as number;
-      } else {
-        clearInterval(bayerTimer);
-        bayerPlay.checked = false;
-      }
-    });
-    if (reduceMotion && bayerPlay?.parentElement) bayerPlay.parentElement.style.display = "none";
 
     // Section entrances.
     const io = new IntersectionObserver(
