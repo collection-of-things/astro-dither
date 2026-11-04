@@ -179,8 +179,23 @@ const mdPath = md ?? `${href === "/docs" ? "/docs" : href}.md`;
     top: var(--header-offset);
     max-height: calc(100vh - var(--header-offset) - 18px);
     overflow-y: auto;
+    overflow-x: hidden;
     font-size: 14px;
+    padding-left: 10px;
+    margin-left: -10px;
     padding-right: 4px;
+    scrollbar-width: thin;
+    scrollbar-color: #2a2e35 transparent;
+  }
+  .side::-webkit-scrollbar {
+    width: 6px;
+  }
+  .side::-webkit-scrollbar-thumb {
+    background: #2a2e35;
+    border-radius: 3px;
+  }
+  .side::-webkit-scrollbar-track {
+    background: transparent;
   }
   .nav-sec {
     margin-bottom: 22px;
@@ -334,6 +349,19 @@ const mdPath = md ?? `${href === "/docs" ? "/docs" : href}.md`;
     padding: 14px 16px;
     overflow-x: auto;
     margin: 0 0 16px;
+    scrollbar-width: thin;
+    scrollbar-color: #2a2e35 transparent;
+  }
+  .doc-body :global(pre::-webkit-scrollbar) {
+    width: 6px;
+    height: 6px;
+  }
+  .doc-body :global(pre::-webkit-scrollbar-thumb) {
+    background: #2a2e35;
+    border-radius: 3px;
+  }
+  .doc-body :global(pre::-webkit-scrollbar-track) {
+    background: transparent;
   }
   .doc-body :global(pre code) {
     background: transparent;
@@ -410,7 +438,22 @@ const mdPath = md ?? `${href === "/docs" ? "/docs" : href}.md`;
   .toc {
     position: sticky;
     top: var(--header-offset);
+    max-height: calc(100vh - var(--header-offset) - 24px);
+    overflow-y: auto;
+    overflow-x: hidden;
     font-size: 13px;
+    scrollbar-width: thin;
+    scrollbar-color: #2a2e35 transparent;
+  }
+  .toc::-webkit-scrollbar {
+    width: 6px;
+  }
+  .toc::-webkit-scrollbar-thumb {
+    background: #2a2e35;
+    border-radius: 3px;
+  }
+  .toc::-webkit-scrollbar-track {
+    background: transparent;
   }
   .toc-head {
     font-size: 12px;
@@ -454,6 +497,18 @@ const mdPath = md ?? `${href === "/docs" ? "/docs" : href}.md`;
   .doc-body :global(.table-wrap) {
     overflow-x: auto;
     margin-bottom: 20px;
+    scrollbar-width: thin;
+    scrollbar-color: #2a2e35 transparent;
+  }
+  .doc-body :global(.table-wrap::-webkit-scrollbar) {
+    height: 6px;
+  }
+  .doc-body :global(.table-wrap::-webkit-scrollbar-thumb) {
+    background: #2a2e35;
+    border-radius: 3px;
+  }
+  .doc-body :global(.table-wrap::-webkit-scrollbar-track) {
+    background: transparent;
   }
   .doc-body :global(.table-wrap table) {
     min-width: 640px;

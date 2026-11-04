@@ -504,6 +504,18 @@ const FOOTER_RISE = {
       flex: 1;
       min-height: 0;
       overflow-y: auto;
+      scrollbar-width: thin;
+      scrollbar-color: #2a2e35 transparent;
+    }
+    .usage-pres::-webkit-scrollbar {
+      width: 6px;
+    }
+    .usage-pres::-webkit-scrollbar-thumb {
+      background: #2a2e35;
+      border-radius: 3px;
+    }
+    .usage-pres::-webkit-scrollbar-track {
+      background: transparent;
     }
     .usage-pres .uc {
       display: none;

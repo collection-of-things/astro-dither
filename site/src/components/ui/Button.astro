@@ -11,7 +11,7 @@ const { variant = "primary", size = "md", href, class: className, ...rest } = As
 const Tag = href ? "a" : "button";
 ---
 
-<Tag class:list={["btn", `v-${variant}`, `s-${size}`, className]} data-slot="button" {...rest}>
+<Tag class:list={["btn", `v-${variant}`, `s-${size}`, className]} data-slot="button" href={href} {...rest}>
   <slot />
 </Tag>
 

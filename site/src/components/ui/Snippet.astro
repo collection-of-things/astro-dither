@@ -115,6 +115,18 @@ const activeCode = tabs.find((t) => t.label === active)?.code ?? "";
     color: var(--ink);
     white-space: nowrap;
     overflow-x: auto;
+    scrollbar-width: thin;
+    scrollbar-color: #2a2e35 transparent;
+  }
+  .snippet-pre::-webkit-scrollbar {
+    height: 6px;
+  }
+  .snippet-pre::-webkit-scrollbar-thumb {
+    background: #2a2e35;
+    border-radius: 3px;
+  }
+  .snippet-pre::-webkit-scrollbar-track {
+    background: transparent;
   }
   .has-prompt code::before {
     content: "$ ";
