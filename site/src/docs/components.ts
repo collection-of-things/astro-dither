@@ -1,5 +1,40 @@
 import type { PropRow } from "./registry";
 import { SHARED as C } from "./component-props";
+import land from "astro-dither/assets/land.png";
+import { effects, type EffectDefinition, type EffectName } from "astro-dither/effects";
+
+const SELECT_PARAMS: Record<string, { value: string; label: string }[]> = {
+  direction: [
+    { value: "1", label: "up" },
+    { value: "-1", label: "down" },
+  ],
+  mask: [
+    { value: "0", label: "none" },
+    { value: "1", label: "top" },
+    { value: "2", label: "bottom" },
+    { value: "3", label: "edges" },
+  ],
+};
+
+/** Plainer labels and units for params whose names are terse. */
+const PARAM_LABELS: Record<string, string> = { length: "Ray length", glow: "Edge glow", direction: "Rays point" };
+const PARAM_UNITS: Record<string, string> = { tilt: "°", angle: "°", lat: "°", lon: "°" };
+
+const label = (key: string) => PARAM_LABELS[key] ?? key.charAt(0).toUpperCase() + key.slice(1);
+
+/** One control per effect param: a slider over its range, or a choice for direction and mask. */
+export function effectControls(name: EffectName): ControlSpec[] {
+  const def: EffectDefinition = effects[name];
+  return Object.entries(def.params).map(([key, value]): ControlSpec => {
+    const options = SELECT_PARAMS[key];
+    if (options) return { kind: "select", key, label: label(key), options, param: true };
+    const r = def.ranges?.[key];
+    const unit = PARAM_UNITS[key];
+    return r
+      ? { kind: "slider", key, label: label(key), min: r.min, max: r.max, step: r.step, param: true, unit }
+      : { kind: "slider", key, label: label(key), min: 0, max: value <= 1 ? 1 : value * 2, step: value <= 1 ? 0.01 : 0.1, param: true, unit };
+  });
+}
 
 export interface ComponentDoc {
   slug: string;
@@ -13,13 +48,41 @@ export interface ComponentDoc {
   element: "dither-surface" | "dither-image" | "dither-canvas";
   seed: Record<string, unknown>;
   controls: ControlSpec[];
+  /** Show the engine controls every ordered effect shares: palette, matrix, cell, speed, levels, bloom. */
+  shared?: boolean;
+  /** The component takes params as their own props, so print them that way in the code tab. */
+  flatParams?: boolean;
 }
 
 export type ControlSpec =
-  | { kind: "slider"; key: string; label: string; min: number; max: number; step: number; param?: boolean }
-  | { kind: "select"; key: string; label: string; options: { value: string; label: string }[]; param?: boolean }
-  | { kind: "triplet"; key: string; label: string; options: { value: string; label: string }[] }
-  | { kind: "toggle"; key: string; label: string; param?: boolean };
+  | { kind: "slider"; key: string; label: string; min: number; max: number; step: number; param?: boolean; unit?: string; group?: string }
+  | { kind: "select"; key: string; label: string; options: { value: string; label: string }[]; param?: boolean; group?: string }
+  | { kind: "triplet"; key: string; label: string; options: { value: string; label: string }[]; group?: string }
+  | { kind: "toggle"; key: string; label: string; param?: boolean; group?: string }
+  | { kind: "swatch"; key: string; label: string; options: string[]; value: string; group?: string };
+
+/** Site colour chips for colour props, in place of the browser's own picker. */
+export const SWATCHES = ["#1f8fff", "#8b5cf6", "#c4b5fd", "#4ade80", "#f472b6", "#fb923c", "#ef4444", "#f2f4f7"];
+const SKIES = ["#02060d", "#000000", "#0b0714", "#03110a", "#140805", "transparent"];
+
+/** Aurora params grouped into control tabs. */
+const AURORA_GROUPS: Record<string, string> = {
+  curtains: "Shape",
+  height: "Shape",
+  spread: "Shape",
+  scale: "Shape",
+  tilt: "Shape",
+  direction: "Shape",
+  mask: "Shape",
+  rays: "Light",
+  length: "Light",
+  glow: "Light",
+  intensity: "Light",
+  shimmer: "Light",
+  sway: "Motion",
+  turbulence: "Motion",
+  drift: "Motion",
+};
 
 export const COMPONENT_DOCS: ComponentDoc[] = [
   {
@@ -89,20 +152,21 @@ export const COMPONENT_DOCS: ComponentDoc[] = [
     slug: "dither-aurora",
     title: "DitherAurora",
     component: "DitherAurora",
-    description: "The aurora effect with all fifteen of its knobs typed.",
+    description: "Curtains of light that fold, sway and shimmer, with every knob typed.",
     intro:
-      "The signature look: folding curtains of light. This wrapper gives you the aurora's full param set as typed props instead of a params object.",
-    usage: "<DitherAurora />",
+      "The signature look: folding curtains of light. Shape it with `curtains`, `height`, `spread`, `sway`, `turbulence`, `rays` and `length`; light it with `color`, `tipColor`, `background`, `glow`, `intensity` and `shimmer`; place it with `scale`, `tilt`, `drift`, `direction` and `mask`. `cell`, `matrix`, `levels` and `bloom` set how it is drawn.",
+    usage: '<DitherAurora color="#4ade80" tipColor="#c4b5fd" bloom={0.6} />',
     rows: C.aurora,
     element: "dither-surface",
-    seed: { effect: "aurora" },
+    seed: { effect: "aurora", params: { ...effects.aurora.params }, cell: 2, matrix: 8, speed: 1 },
     controls: [
-      { kind: "slider", key: "height", label: "Height", min: 0, max: 0.9, step: 0.01, param: true },
-      { kind: "slider", key: "curtains", label: "Curtains", min: 1, max: 6, step: 1, param: true },
-      { kind: "slider", key: "rays", label: "Rays", min: 2, max: 20, step: 1, param: true },
-      { kind: "slider", key: "sway", label: "Sway", min: 0, max: 3, step: 0.1, param: true },
-      { kind: "slider", key: "intensity", label: "Intensity", min: 0, max: 1, step: 0.05, param: true },
+      { kind: "swatch", key: "color", label: "Edge colour", options: SWATCHES, value: "#1f8fff", group: "Colour" },
+      { kind: "swatch", key: "tipColor", label: "Tip colour", options: SWATCHES, value: "#1f8fff", group: "Colour" },
+      { kind: "swatch", key: "background", label: "Sky", options: SKIES, value: "#02060d", group: "Colour" },
+      ...effectControls("aurora").map((c) => ({ ...c, group: AURORA_GROUPS[c.key] })),
     ],
+    shared: true,
+    flatParams: true,
   },
   {
     slug: "dither-effect",
@@ -114,23 +178,27 @@ export const COMPONENT_DOCS: ComponentDoc[] = [
     usage: '<DitherEffect effect="plasma" params={{ scale: 3 }} />',
     rows: C.effect,
     element: "dither-surface",
-    seed: { effect: "plasma" },
-    controls: [],
+    seed: { effect: "plasma", params: { ...effects.plasma.params }, cell: 2, matrix: 8, speed: 1 },
+    controls: effectControls("plasma"),
+    shared: true,
   },
   {
     slug: "dither-globe",
     title: "DitherGlobe",
     component: "DitherGlobe",
-    description: "An orthographic globe dithered from a bundled land mask.",
+    description: "A spinning, lit globe dithered from a bundled land mask.",
     intro:
-      "The globe effect with the land mask bundled as an asset. `lat` and `lon` rotate the view; the palette styles the land.",
+      "The globe effect with the land mask bundled as an asset. It turns on its own; `lat` and `lon` set the starting view, `sea` how much ocean shows, and the palette styles the land.",
     usage: "<DitherGlobe />",
     rows: C.globe,
     element: "dither-surface",
-    seed: { effect: "globe", src: "/_astro/land.DQQLgLH3.png", palette: ["transparent", "#f4f1ea"] },
+    seed: { effect: "globe", src: land.src, palette: ["transparent", "#f4f1ea"] },
     controls: [
       { kind: "slider", key: "lat", label: "Latitude", min: -90, max: 90, step: 1, param: true },
       { kind: "slider", key: "lon", label: "Longitude", min: -180, max: 180, step: 1, param: true },
+      { kind: "slider", key: "sea", label: "Sea", min: 0, max: 0.5, step: 0.01, param: true },
     ],
+    shared: true,
+    flatParams: true,
   },
 ];

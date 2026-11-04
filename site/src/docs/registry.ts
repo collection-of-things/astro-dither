@@ -451,10 +451,10 @@ export const EFFECTS: EffectDoc[] = [
     slug: "globe",
     title: "Globe",
     group: "Scenes",
-    description: "An orthographic globe dithered from a land mask.",
+    description: "A spinning, lit globe dithered from a land mask.",
     intro:
-      "The bundled land mask sampled onto a sphere. `lat` and `lon` set which point faces the viewer. It ships a two-colour palette that reads as paper land on a transparent sea.",
-    propGroups: "Placement: `lat`, `lon`.",
+      "The bundled land mask sampled onto a lit sphere that turns west to east. `lat` and `lon` set where the view starts, `sea` sets how much of the ocean shows, and `speed: 0` holds it still.",
+    propGroups: "Placement: `lat`, `lon`. Look: `sea`.",
     usage: "<DitherGlobe />",
     examples: [
       {
@@ -499,9 +499,13 @@ export const EFFECTS: EffectDoc[] = [
 
 export const SHARED_PROP_ROWS: PropRow[] = [
   { name: "palette", type: "string[]", def: "the effect's", desc: "2 to 8 colours, paper first, brightest last. `transparent` works." },
-  { name: "cell", type: "number", def: "2", desc: "Size of one dither cell in CSS pixels, 1 to 8." },
+  { name: "cell", type: "number", def: "2", desc: "Size of one dither cell in CSS pixels. Rounded to whole device pixels so cells stay even." },
   { name: "matrix", type: "2 | 4 | 8 | \"noise\"", def: "8", desc: "The Bayer threshold size, or noise for a random look." },
   { name: "speed", type: "number", def: "1", desc: "Playback speed. 0 draws one still frame." },
+  { name: "stillTime", type: "number", def: "the effect's", desc: "The moment drawn when motion is off or reduced, in seconds." },
+  { name: "levels", type: "number", def: "0 (all)", desc: "Tones the field snaps to before dithering. Low values give hard, posterised steps." },
+  { name: "bloom", type: "number", def: "0", desc: "Bloom around lit cells, 0 to 1. CSS `--dither-bloom` overrides it, so hover states can raise it." },
+  { name: "bloomRadius", type: "number", def: "10", desc: "Bloom blur in CSS pixels. CSS `--dither-bloom-radius` overrides it." },
   { name: "class", type: "string", def: "undefined", desc: "Classes on the surface element, for size and position." },
 ];
 
@@ -538,7 +542,11 @@ const PROP_DESCRIPTIONS: Partial<Record<EffectName, Record<string, string>>> = {
   tunnel: { twist: "Spiral depth.", spokes: "Wall segments around the ring." },
   starfield: { gain: "Overall star brightness." },
   eclipse: { radius: "Disc size relative to the surface." },
-  globe: { lat: "Latitude facing the viewer, degrees.", lon: "Longitude facing the viewer, degrees." },
+  globe: {
+    lat: "Latitude facing the viewer, degrees.",
+    lon: "Longitude facing the viewer when the spin starts, degrees.",
+    sea: "Tone of the sea. 0 leaves it clear so only land shows.",
+  },
   rise: {
     height: "Where the edge sits, 0 to 1. Higher means more of the surface is bright.",
     wave: "How far the edge sways in a slow sine.",
@@ -558,8 +566,8 @@ const PROP_DESCRIPTIONS: Partial<Record<EffectName, Record<string, string>>> = {
     scale: "Horizontal zoom.",
     tilt: "Tilt of the curtains in degrees.",
     drift: "Sideways travel.",
-    direction: "1 rises, -1 hangs the rays from a bright top edge.",
-    mask: "0 none, 1 fades the top, 2 fades the bottom, 3 fades the sides.",
+    direction: "up rises from a bright lower edge; down hangs the rays from a bright top edge (1 or -1 in params).",
+    mask: "Fades it out where your text sits: none, top, bottom or edges (0 to 3 in params).",
   },
 };
 

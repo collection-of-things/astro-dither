@@ -61,6 +61,12 @@ class DitherImage extends HTMLElement {
     }
     this.shader.canvasElement.setAttribute("aria-hidden", "true");
     this.hideImage(img);
+    // The mount draws on its first rAF, queued before this one.
+    requestAnimationFrame(() => {
+      if (!this.isConnected) return;
+      this.setAttribute("data-dither-ready", "");
+      this.dispatchEvent(new CustomEvent("dither:ready", { bubbles: true }));
+    });
   }
 
   private hideImage(img: HTMLImageElement): void {

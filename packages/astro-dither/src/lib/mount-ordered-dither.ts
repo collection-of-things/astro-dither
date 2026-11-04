@@ -20,6 +20,7 @@ uniform float u_time;
 uniform sampler2D u_image;
 uniform vec4 u_palette[8];
 uniform float u_colorCount;
+uniform float u_levels;
 
 out vec4 fragColor;
 
@@ -105,6 +106,8 @@ void main() {
     return;
   }
 
+  if (u_levels > 1.5) tone = floor(clamp(tone, 0.0, 1.0) * (u_levels - 1.0) + 0.5) / (u_levels - 1.0);
+
   float steps = max(u_colorCount - 1.0, 1.0);
   float scaled = clamp(tone, 0.0, 1.0) * steps;
   float base = floor(scaled);
@@ -114,7 +117,16 @@ void main() {
 }
 `;
 
-const SHARED_UNIFORMS = ["u_resolution", "u_cell", "u_matrix", "u_time", "u_image", "u_palette[0]", "u_colorCount"];
+const SHARED_UNIFORMS = [
+  "u_resolution",
+  "u_cell",
+  "u_matrix",
+  "u_time",
+  "u_image",
+  "u_palette[0]",
+  "u_colorCount",
+  "u_levels",
+];
 
 interface OrderedRenderer {
   gl: WebGL2RenderingContext;
@@ -184,9 +196,16 @@ export function defineOrderedDither(): void {
   customElements.define(ELEMENT_NAME, DitherSurface);
 }
 
-/** One ordered-dither canvas. Draws once, and again when the box resizes. Speed above 0 runs a frame loop. */
+/**
+ * One ordered-dither canvas. Draws once, and again when the box resizes. Speed above 0 runs a frame loop.
+ * With `bloom` above 0 a blurred copy of each frame sits on top in screen blend, so lit cells bloom.
+ * The bloom reads `--dither-bloom` (strength) and `--dither-bloom-radius` (blur) from CSS, so pages can
+ * change it on hover or with a transition.
+ */
 class DitherSurface extends HTMLElement {
+  private canvas: HTMLCanvasElement | undefined;
   private ctx2d: CanvasRenderingContext2D | undefined;
+  private bloomCtx: CanvasRenderingContext2D | undefined;
   private texture: WebGLTexture | undefined;
   private resizeObserver: ResizeObserver | undefined;
   private intersectionObserver: IntersectionObserver | undefined;
@@ -196,17 +215,24 @@ class DitherSurface extends HTMLElement {
   private inViewport = true;
   private clock = 0;
   private lastTick = 0;
+  private readySent = false;
 
   connectedCallback(): void {
     const settings = parseOrderedDither(this.dataset.dither);
     this.settings = settings;
     const canvas = document.createElement("canvas");
+    // The canvas is sized in whole cells, so it can overhang the host by part of one; draw()
+    // clips that part off. Taking it out of flow keeps it from feeding back into the host's size.
+    canvas.style.cssText = "position:absolute;left:0;top:0;display:block;image-rendering:pixelated";
+    if (getComputedStyle(this).position === "static") this.style.position = "relative";
+    this.canvas = canvas;
     this.replaceChildren(canvas);
     this.ctx2d = canvas.getContext("2d") ?? undefined;
     if (this.ctx2d === undefined || getRenderer() === undefined || getProgram(settings.effect) === undefined) {
       this.style.background = "#070707";
       return;
     }
+    if (settings.bloom > 0) this.bloomCtx = this.createBloom(settings);
 
     this.resizeObserver = new ResizeObserver(() => this.draw());
     this.resizeObserver.observe(this);
@@ -247,23 +273,61 @@ class DitherSurface extends HTMLElement {
     this.texture = undefined;
   }
 
+  /** The bloom layer: a half-resolution copy, smoothly scaled, blurred and screened over the dither. */
+  private createBloom(settings: OrderedDitherSettings): CanvasRenderingContext2D | undefined {
+    const glow = document.createElement("canvas");
+    glow.setAttribute("data-dither-bloom", "");
+    glow.style.cssText = [
+      "position:absolute",
+      "left:0",
+      "top:0",
+      "display:block",
+      "pointer-events:none",
+      "mix-blend-mode:screen",
+      `opacity:var(--dither-bloom, ${settings.bloom})`,
+      `filter:blur(var(--dither-bloom-radius, ${settings.bloomRadius}px)) saturate(1.4)`,
+      "transition:opacity 300ms ease",
+    ].join(";");
+    this.append(glow);
+    return glow.getContext("2d") ?? undefined;
+  }
+
   private draw(): void {
     const shared = getRenderer();
     const ctx2d = this.ctx2d;
     const settings = this.settings;
-    const canvas = this.querySelector("canvas");
-    if (!shared || !ctx2d || !settings || !(canvas instanceof HTMLCanvasElement)) return;
+    const canvas = this.canvas;
+    if (!shared || !ctx2d || !settings || !canvas) return;
     const def: EffectDefinition = effects[settings.effect];
     if (def.usesImage === true && this.texture === undefined) return;
     const entry = getProgram(settings.effect);
     if (entry === undefined) return;
 
+    // The shader output is flat inside each dither cell, so render one canvas
+    // pixel per cell and let CSS scale it up with hard edges. That is cell² × dpr²
+    // fewer pixels to shade and to copy out of the shared context.
     const dpr = Math.min(window.devicePixelRatio || 1, 2);
-    const width = Math.max(1, Math.round(this.clientWidth * dpr));
-    const height = Math.max(1, Math.round(this.clientHeight * dpr));
+    const cellPx = Math.max(1, Math.round(settings.cell * dpr));
+    const width = Math.max(1, Math.ceil((this.clientWidth * dpr) / cellPx));
+    const height = Math.max(1, Math.ceil((this.clientHeight * dpr) / cellPx));
     if (canvas.width !== width || canvas.height !== height) {
       canvas.width = width;
       canvas.height = height;
+      // Exact multiples of the cell keep every cell the same size; clip the overhang.
+      const cssWidth = (width * cellPx) / dpr;
+      const cssHeight = (height * cellPx) / dpr;
+      canvas.style.width = `${cssWidth}px`;
+      canvas.style.height = `${cssHeight}px`;
+      const overX = Math.max(0, cssWidth - this.clientWidth);
+      const overY = Math.max(0, cssHeight - this.clientHeight);
+      canvas.style.clipPath = `inset(0 ${overX}px ${overY}px 0)`;
+      const glow = this.bloomCtx?.canvas;
+      if (glow) {
+        glow.width = Math.max(1, Math.ceil(width / 2));
+        glow.height = Math.max(1, Math.ceil(height / 2));
+        glow.style.width = `${cssWidth}px`;
+        glow.style.height = `${cssHeight}px`;
+      }
     }
     if (shared.canvas.width < width) shared.canvas.width = width;
     if (shared.canvas.height < height) shared.canvas.height = height;
@@ -276,16 +340,17 @@ class DitherSurface extends HTMLElement {
     gl.clearColor(0, 0, 0, 0);
     gl.clear(gl.COLOR_BUFFER_BIT);
 
-    setFloat(locations, gl, "u_cell", settings.cell * dpr);
+    setFloat(locations, gl, "u_cell", 1);
     setFloat(locations, gl, "u_matrix", matrixNumber(settings.matrix));
     setVec2(locations, gl, "u_resolution", width, height);
-    setFloat(locations, gl, "u_time", def.stillTime + this.clock);
+    setFloat(locations, gl, "u_time", settings.stillTime + this.clock);
     for (const [key, value] of Object.entries(settings.params)) {
       setFloat(locations, gl, `p_${key}`, value);
     }
     const flat = settings.palette.flat();
     gl.uniform4fv(locations["u_palette[0]"], flat.concat(new Array(32 - flat.length).fill(0)));
     setFloat(locations, gl, "u_colorCount", settings.palette.length);
+    setFloat(locations, gl, "u_levels", settings.levels);
 
     if (this.texture) {
       gl.activeTexture(gl.TEXTURE0);
@@ -294,7 +359,20 @@ class DitherSurface extends HTMLElement {
     }
 
     gl.drawArrays(gl.TRIANGLES, 0, 6);
+    // Palettes may hold transparent colours, so wipe the last frame before copying the new one.
+    ctx2d.clearRect(0, 0, width, height);
     ctx2d.drawImage(shared.canvas, 0, shared.canvas.height - height, width, height, 0, 0, width, height);
+    const bloomCtx = this.bloomCtx;
+    if (bloomCtx) {
+      const { width: gw, height: gh } = bloomCtx.canvas;
+      bloomCtx.clearRect(0, 0, gw, gh);
+      bloomCtx.drawImage(canvas, 0, 0, gw, gh);
+    }
+    if (!this.readySent) {
+      this.readySent = true;
+      this.setAttribute("data-dither-ready", "");
+      this.dispatchEvent(new CustomEvent("dither:ready", { bubbles: true }));
+    }
   }
 
   /** The loop only runs while the element is on screen, the tab is visible, and motion is allowed. */

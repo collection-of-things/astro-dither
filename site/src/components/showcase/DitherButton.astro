@@ -1,0 +1,78 @@
+---
+import { DitherEffect } from "astro-dither";
+
+interface Props {
+  href?: string;
+  class?: string;
+}
+
+/**
+ * A pill button filled end to end with moving dither. Hover crossfades to a
+ * brighter palette with a stronger bloom. Used in the home page showcase.
+ */
+const { href, class: className } = Astro.props;
+const Tag = href ? "a" : "button";
+
+const REST = ["#00121f", "#002a45", "#004a78", "#0071b8"];
+const HOVER = ["#001a2b", "#00477a", "#0074bd", "#1c9cf0"];
+---
+
+<Tag class:list={["dbtn", className]} href={href} type={href ? undefined : "button"}>
+  <span class="dbtn-fx" aria-hidden="true">
+    <DitherEffect effect="plasma" params={{ scale: 1.2 }} palette={REST} cell={2} speed={0.8} bloom={0.5} bloomRadius={8} />
+  </span>
+  <span class="dbtn-fx dbtn-fx-hover" aria-hidden="true">
+    <DitherEffect effect="plasma" params={{ scale: 1.2 }} palette={HOVER} cell={2} speed={0.8} bloom={0.9} bloomRadius={10} />
+  </span>
+  <span class="dbtn-label"><slot /></span>
+</Tag>
+
+<style>
+  .dbtn {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    height: 44px;
+    padding: 0 24px;
+    border: 0;
+    border-radius: 999px;
+    overflow: hidden;
+    background: #00121f;
+    color: #f2f4f7;
+    font: inherit;
+    font-size: 14px;
+    font-weight: 500;
+    text-decoration: none;
+    cursor: pointer;
+    isolation: isolate;
+  }
+  .dbtn-fx {
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+  }
+  .dbtn-fx-hover {
+    opacity: 0;
+    transition: opacity 250ms ease;
+  }
+  .dbtn:hover .dbtn-fx-hover,
+  .dbtn:focus-visible .dbtn-fx-hover {
+    opacity: 1;
+  }
+  .dbtn-label {
+    text-shadow: 0 1px 6px rgba(0, 18, 31, 0.85);
+  }
+  .dbtn:active {
+    filter: brightness(0.92);
+  }
+  .dbtn:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(0, 178, 255, 0.5);
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .dbtn-fx-hover {
+      transition: none;
+    }
+  }
+</style>

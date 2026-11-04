@@ -312,18 +312,27 @@ float field(vec2 uv, vec2 res, float t) {
 
 const GLOBE_FIELD = /* glsl */ `
 float field(vec2 uv, vec2 res, float t) {
-  vec2 p = (uv - 0.5) * 2.0;
-  if (dot(p, p) > 1.0) return -1.0;
-  float z = sqrt(max(0.0, 1.0 - dot(p, p)));
+  // Fit a round globe inside any box.
+  float aspect = res.x / res.y;
+  vec2 p = (uv - 0.5) * 2.0 * (aspect > 1.0 ? vec2(aspect, 1.0) : vec2(1.0, 1.0 / aspect));
+  float r2 = dot(p, p);
+  if (r2 > 1.0) return -1.0;
+  float z = sqrt(1.0 - r2);
   float lat0 = radians(p_lat);
-  float lon0 = radians(p_lon);
+  // Spin west to east: the centre longitude falls over time.
+  float lon0 = radians(p_lon - t * 8.0);
   float lat = asin(clamp(p.y * cos(lat0) + z * sin(lat0), -1.0, 1.0));
   float lon = lon0 + atan(p.x, z * cos(lat0) - p.y * sin(lat0));
-  vec2 mapUv = vec2(fract(lon / (2.0 * PI) + 0.5), 0.5 + lat / PI);
-  vec3 sampleColor = texture(u_image, mapUv).rgb;
-  float land = max(sampleColor.r, max(sampleColor.g, sampleColor.b));
-  if (land < 0.12) return 0.0;
-  return land * 0.62;
+  // The mask is equirectangular: longitude -180 at the left, north at the top.
+  vec2 mapUv = vec2(fract(lon / (2.0 * PI) + 0.5), 0.5 - lat / PI);
+  float land = smoothstep(0.35, 0.65, texture(u_image, mapUv).r);
+  // Light from the upper left. Land stays well above the sea on the night side
+  // so coastlines still read, and a thin rim keeps the sea's edge visible.
+  float light = clamp(dot(vec3(p, z), normalize(vec3(-0.55, 0.45, 0.7))), 0.0, 1.0);
+  float rim = pow(1.0 - z, 3.0) * 0.18;
+  float sea = p_sea * (0.35 + 0.65 * light) + rim;
+  float ground = 0.5 + 0.5 * light;
+  return mix(sea, ground, land);
 }
 `;
 
@@ -373,7 +382,7 @@ export const effects = {
     params: {
       curtains: 3,
       height: 0.42,
-      spread: 0.05,
+      spread: 0.11,
       sway: 1,
       turbulence: 0.6,
       rays: 8,
@@ -549,14 +558,15 @@ export const effects = {
   },
   globe: {
     field: GLOBE_FIELD,
-    params: { lat: 20, lon: 48 },
+    params: { lat: 20, lon: 48, sea: 0.12 },
     ranges: {
       lat: { min: -90, max: 90, step: 1 },
       lon: { min: -180, max: 180, step: 1 },
+      sea: { min: 0, max: 0.5, step: 0.01 },
     },
     stillTime: 0,
     palette: ["transparent", "#f4f1ea"],
-    speed: 0,
+    speed: 1,
     usesImage: true,
   },
 } as const satisfies Record<string, EffectDefinition>;

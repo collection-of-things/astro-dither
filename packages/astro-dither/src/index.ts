@@ -7,4 +7,5 @@ export { default as DitherGlobe } from "./components/DitherGlobe.astro";
 
 export { ditherPresets } from "./lib/dither";
 export { effects } from "./lib/effects";
+export { auroraPalette } from "./lib/ordered-dither";
 export type { EffectDefinition, EffectName, EffectParams } from "./lib/effects";

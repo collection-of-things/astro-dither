@@ -1,0 +1,147 @@
+---
+import { DitherGradient, DitherImage } from "astro-dither";
+import Card from "../starwind/card";
+
+/** Showcase card: a now-playing player with dithered cover art and a dithered progress bar. */
+---
+
+<Card.Root class="player" role="article">
+  <div class="player-art">
+    <DitherImage
+      src="/examples/portrait.jpg"
+      alt="Cover art for Night drive"
+      colorBack="#000000"
+      colorFront="#00b2ff"
+      colorHighlight="#d6efff"
+      type="4x4"
+      size={2}
+    />
+  </div>
+  <div class="player-meta">
+    <h3>Night drive</h3>
+    <p>Low Tide</p>
+  </div>
+  <div
+    class="player-progress"
+    role="progressbar"
+    aria-label="Playback position"
+    aria-valuemin="0"
+    aria-valuemax="192"
+    aria-valuenow="108"
+    aria-valuetext="1:48 of 3:12"
+  >
+    <span class="player-fill">
+      <DitherGradient mode="linear" angle={90} from={0.25} to={1} cell={1.5} palette={["#001a2b", "#0b4f99", "#00b2ff", "#d6efff"]} />
+    </span>
+  </div>
+  <div class="player-times" aria-hidden="true">
+    <span>1:48</span>
+    <span>3:12</span>
+  </div>
+  <div class="player-controls">
+    <button type="button" aria-label="Previous track">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M6 5h2v14H6zM20 5v14L9 12z"></path></svg>
+    </button>
+    <button type="button" class="play" aria-label="Pause">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M7 5h4v14H7zM13 5h4v14h-4z"></path></svg>
+    </button>
+    <button type="button" aria-label="Next track">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M16 5h2v14h-2zM4 5v14l11-7z"></path></svg>
+    </button>
+  </div>
+</Card.Root>
+
+<style>
+  .player {
+    height: 100%;
+    gap: 0;
+    padding: 16px;
+    border-radius: 16px;
+  }
+  .player-art {
+    position: relative;
+    aspect-ratio: 1;
+    border-radius: 10px;
+    overflow: hidden;
+    background: #000;
+  }
+  .player-art :global(dither-image) {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+  }
+  .player-art :global(dither-image > img) {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+  .player-meta {
+    margin-top: 16px;
+  }
+  h3 {
+    font-size: 15px;
+    font-weight: 500;
+    color: var(--ink);
+  }
+  .player-meta p {
+    font-size: 13px;
+    color: var(--muted);
+  }
+  .player-progress {
+    position: relative;
+    margin-top: 16px;
+    height: 6px;
+    border-radius: 3px;
+    background: var(--line);
+    overflow: hidden;
+  }
+  .player-fill {
+    position: absolute;
+    inset: 0 auto 0 0;
+    width: 56%;
+  }
+  .player-times {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 6px;
+    font-family: "Geist Mono", ui-monospace, monospace;
+    font-size: 11px;
+    color: var(--muted);
+  }
+  .player-controls {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 20px;
+    margin-top: auto;
+    padding-top: 12px;
+  }
+  .player-controls button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    border: 0;
+    border-radius: 999px;
+    background: transparent;
+    color: var(--muted);
+    cursor: pointer;
+    transition: color var(--t-hover) ease;
+  }
+  .player-controls button:hover {
+    color: var(--ink);
+  }
+  .player-controls .play {
+    width: 44px;
+    height: 44px;
+    background: var(--ink);
+    color: #000;
+  }
+  .player-controls .play:hover {
+    color: #000;
+    filter: brightness(0.9);
+  }
+</style>

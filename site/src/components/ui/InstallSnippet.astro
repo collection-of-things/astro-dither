@@ -1,0 +1,74 @@
+---
+import { Code } from "astro-expressive-code/components";
+import Tabs from "../starwind/tabs";
+
+interface SnippetTab {
+  label: string;
+  code: string;
+}
+
+interface Props {
+  tabs?: SnippetTab[];
+  defaultTab?: string;
+}
+
+const {
+  tabs = [
+    { label: "pnpm", code: "pnpm add astro-dither" },
+    { label: "npm", code: "npm i astro-dither" },
+    { label: "bun", code: "bun add astro-dither" },
+  ],
+  defaultTab = "pnpm",
+} = Astro.props;
+const active = tabs.some((t) => t.label === defaultTab) ? defaultTab : (tabs[0]?.label ?? "");
+---
+
+<Tabs.Root defaultValue={active} class="install">
+  <Tabs.List class="install-tabs">
+    {tabs.map((t) => (
+      <Tabs.Trigger value={t.label} class="install-tab">
+        {t.label}
+      </Tabs.Trigger>
+    ))}
+  </Tabs.List>
+  {tabs.map((t) => (
+    <Tabs.Content value={t.label} hidden={t.label !== active}>
+      <Code code={t.code} lang="bash" frame="terminal" />
+    </Tabs.Content>
+  ))}
+</Tabs.Root>
+
+<style>
+  .install-tabs {
+    width: fit-content;
+    gap: 2px;
+    padding: 3px;
+    border-radius: 999px;
+    background: #1b1d21;
+    margin-bottom: 8px;
+  }
+  .install-tab {
+    border: 0;
+    background: transparent;
+    color: var(--muted);
+    font-family: "Geist Mono", ui-monospace, monospace;
+    font-size: 12px;
+    padding: 4px 10px;
+    border-radius: 999px;
+    cursor: pointer;
+    white-space: nowrap;
+    transition:
+      color var(--t-hover, 200ms) ease,
+      background var(--t-hover, 200ms) ease;
+  }
+  .install-tab:hover {
+    color: var(--ink);
+  }
+  .install-tab[data-state="active"] {
+    background: #2e3137;
+    color: var(--ink);
+  }
+  .install :global(.expressive-code) {
+    margin: 0;
+  }
+</style>

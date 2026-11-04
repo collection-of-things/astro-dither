@@ -4,12 +4,13 @@ interface Props {
   description?: string;
 }
 
+import "../styles/starwind.css";
 import SiteHeader from "../components/SiteHeader.astro";
 
 const { title, description = "Animated dither backgrounds, gradients and image effects for Astro. No React." } = Astro.props;
 ---
 
-<html lang="en">
+<html lang="en" class="dark">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width" />
@@ -44,7 +45,7 @@ const { title, description = "Animated dither backgrounds, gradients and image e
       if (!matchMedia("(prefers-reduced-motion: reduce)").matches) {
         document
           .querySelectorAll(
-            "pre, .side, .toc, .table-wrap, .strip, .usage-pres, #search-results, .sheet-panel, .drawer-panel",
+            "pre, .side, .toc, .strip, #search-results, [data-slot='sheet-content'], [data-slot='dialog-content']",
           )
           .forEach((el) => el.setAttribute("data-lenis-prevent", ""));
         // Anchor targets already carry scroll-margin-top for the fixed header, which Lenis honours.
@@ -80,9 +81,46 @@ const { title, description = "Animated dither backgrounds, gradients and image e
     --t-hover: 200ms;
   }
 
-  html {
-    overflow-x: clip;
+  @layer base {
+    html {
+      overflow-x: clip;
+    }
+    *,
+    *::before,
+    *::after {
+      box-sizing: border-box;
+    }
+
+    html,
+    body {
+      margin: 0;
+      background: var(--ground);
+      color: var(--ink);
+      font-family: "Geist", system-ui, sans-serif;
+      font-size: 16px;
+      line-height: 1.5;
+    }
+
+    h1,
+    h2,
+    h3,
+    p,
+    figure,
+    figcaption {
+      margin: 0;
+    }
+
+    a {
+      color: inherit;
+    }
+
+    /* Base focus ring; component utilities (outline-none + ring) override it. */
+    :focus-visible {
+      outline: 2px solid var(--accent);
+      outline-offset: 2px;
+    }
   }
+
   [id] {
     scroll-margin-top: var(--header-offset);
   }
@@ -93,39 +131,6 @@ const { title, description = "Animated dither backgrounds, gradients and image e
     html.lenis {
       scroll-behavior: auto;
     }
-  }
-  *,
-  *::before,
-  *::after {
-    box-sizing: border-box;
-  }
-
-  html,
-  body {
-    margin: 0;
-    background: var(--ground);
-    color: var(--ink);
-    font-family: "Geist", system-ui, sans-serif;
-    font-size: 16px;
-    line-height: 1.5;
-  }
-
-  h1,
-  h2,
-  h3,
-  p,
-  figure,
-  figcaption {
-    margin: 0;
-  }
-
-  a {
-    color: inherit;
-  }
-
-  :focus-visible {
-    outline: 2px solid var(--accent);
-    outline-offset: 2px;
   }
 
   ::selection {

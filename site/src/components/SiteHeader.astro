@@ -1,7 +1,13 @@
 ---
+import Menu2 from "@tabler/icons/outline/menu-2.svg";
+import SearchIcon from "@tabler/icons/outline/search.svg";
 import { GITCAFE_URL } from "../site.ts";
-import Button from "./ui/Button.astro";
 import Logo from "./Logo.astro";
+import { Button } from "./starwind/button";
+import Dialog from "./starwind/dialog";
+import { InputGroup, InputGroupAddon, InputGroupInput } from "./starwind/input-group";
+import { Kbd } from "./starwind/kbd";
+import Sheet from "./starwind/sheet";
 
 const path = Astro.url.pathname.replace(/\/+$/, "") || "/";
 
@@ -39,41 +45,64 @@ function isActive(label: string): boolean {
       ))}
     </div>
     <div class="actions">
-      <button class="search-field" type="button" data-open-search aria-label="Search docs (Ctrl K)">
-        <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7" /><path d="m20 20-3.5-3.5" /></svg>
+      <Button
+        variant="outline"
+        size="sm"
+        class="search-field"
+        data-sw-dialog-trigger
+        data-sw-dialog-target-id="site-search"
+        aria-label="Search docs (Ctrl K)"
+      >
+        <SearchIcon aria-hidden="true" />
         <span class="search-label">Search</span>
-        <kbd data-kbd>Ctrl K</kbd>
-      </button>
-      <a class="gitcafe" href={GITCAFE_URL} target="_blank" rel="noreferrer" aria-label="Source on git.cafe" title="Source on git.cafe">
+        <Kbd data-kbd>Ctrl K</Kbd>
+      </Button>
+      <Button variant="ghost" size="icon-sm" class="gitcafe" href={GITCAFE_URL} target="_blank" rel="noreferrer" aria-label="Source on git.cafe" title="Source on git.cafe">
         <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 3v12" /><circle cx="18" cy="6" r="3" /><circle cx="6" cy="18" r="3" /><path d="M18 9a9 9 0 0 1-9 9" /></svg>
-      </a>
+      </Button>
       <Button variant="primary" size="sm" href="/docs/installation" class="get-started">Get started</Button>
-      <button class="menu-btn" type="button" data-open-menu aria-label="Menu">
-        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 6h18M3 12h18M3 18h18" /></svg>
-      </button>
+      <Button
+        variant="ghost"
+        size="icon-sm"
+        class="menu-btn"
+        aria-label="Menu"
+        data-sw-drawer-trigger
+        data-sw-drawer-target-id="site-sheet"
+      >
+        <Menu2 aria-hidden="true" />
+      </Button>
     </div>
   </nav>
 </header>
 
-<div class="sheet" id="site-sheet" hidden>
-  <div class="sheet-back" data-close-menu></div>
-  <div class="sheet-panel">
-    {LINKS.map((l) => (
-      <a class:list={[{ on: isActive(l.label) }]} href={l.href}>{l.label}</a>
-    ))}
-    <a href={GITCAFE_URL} target="_blank" rel="noreferrer">git.cafe</a>
-    <a href="/docs/installation">Get started</a>
-    <button class="sheet-search" type="button" data-open-search>Search</button>
-  </div>
-</div>
+<Sheet.Root id="site-sheet">
+  <Sheet.Content side="top" class="site-sheet bg-card">
+    <Sheet.Title class="sr-only">Menu</Sheet.Title>
+    <nav class="sheet-links" aria-label="Site menu">
+      {LINKS.map((l) => (
+        <a class:list={[{ on: isActive(l.label) }]} href={l.href} data-sw-drawer-close>{l.label}</a>
+      ))}
+      <a href={GITCAFE_URL} target="_blank" rel="noreferrer" data-sw-drawer-close>git.cafe</a>
+      <a href="/docs/installation" data-sw-drawer-close>Get started</a>
+      <button class="sheet-search" type="button" data-sw-drawer-close data-sw-dialog-trigger data-sw-dialog-target-id="site-search">
+        Search
+      </button>
+    </nav>
+  </Sheet.Content>
+</Sheet.Root>
 
-<div class="search" id="search" hidden>
-  <div class="search-back" data-close-search></div>
-  <div class="search-panel" role="dialog" aria-modal="true" aria-label="Search">
-    <input id="search-input" type="text" placeholder="Search docs" autocomplete="off" spellcheck="false" />
+<Dialog.Root id="site-search">
+  <Dialog.Content class="search-panel" aria-label="Search docs">
+    <Dialog.Title class="sr-only">Search docs</Dialog.Title>
+    <InputGroup class="search-box">
+      <InputGroupAddon align="inline-start" class="search-ic">
+        <SearchIcon aria-hidden="true" />
+      </InputGroupAddon>
+      <InputGroupInput id="search-input" type="text" placeholder="Search docs" autocomplete="off" spellcheck={false} aria-label="Search docs" />
+    </InputGroup>
     <ul id="search-results" role="listbox"></ul>
-  </div>
-</div>
+  </Dialog.Content>
+</Dialog.Root>
 
 <style>
   .site-head {
@@ -149,23 +178,16 @@ function isActive(label: string): boolean {
     margin-left: auto;
   }
   .search-field {
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
     width: 164px;
     height: 32px;
+    justify-content: flex-start;
+    gap: 8px;
     padding: 0 10px;
-    border: 1px solid #1c1f24;
-    border-radius: 999px;
-    background: #101215;
-    color: var(--muted);
-    font-family: inherit;
     font-size: 12px;
-    cursor: pointer;
-    transition: border-color var(--t-hover) ease, color var(--t-hover) ease;
+    font-weight: 400;
+    color: var(--muted);
   }
   .search-field:hover {
-    border-color: #262a31;
     color: var(--ink);
   }
   .search-field kbd {
@@ -173,63 +195,31 @@ function isActive(label: string): boolean {
     font-size: 12px;
     color: var(--muted);
     margin-left: auto;
+    border: 0;
+    background: transparent;
+    padding: 0;
   }
   .gitcafe {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 32px;
-    height: 32px;
-    border-radius: 8px;
     color: #8b93a1;
-    transition: color var(--t-hover) ease, background var(--t-hover) ease;
   }
   .gitcafe:hover {
     color: var(--ink);
-    background: #16181c;
   }
   .menu-btn {
     display: none;
-    align-items: center;
-    justify-content: center;
-    width: 34px;
-    height: 34px;
-    border: 0;
-    border-radius: 8px;
-    background: transparent;
-    color: var(--muted);
-    cursor: pointer;
   }
 
-  .sheet[hidden],
-  .search[hidden] {
-    display: none;
-  }
-  .sheet,
-  .search {
-    position: fixed;
-    inset: 0;
-    z-index: 100;
-  }
-  .sheet-back,
-  .search-back {
-    position: absolute;
-    inset: 0;
-    background: rgba(0, 0, 0, 0.6);
-  }
-  .sheet-panel {
-    position: absolute;
-    top: 60px;
-    left: 0;
-    right: 0;
-    background: var(--card);
+  /* Site menu sheet (mobile). */
+  :global(.site-sheet) {
+    padding: 8px 12px 12px;
     border-bottom: 1px solid var(--line);
     border-radius: 0 0 12px 12px;
-    padding: 8px 12px 12px;
+  }
+  .sheet-links {
     display: flex;
     flex-direction: column;
   }
-  .sheet-panel a,
+  .sheet-links a,
   .sheet-search {
     padding: 10px 12px;
     font-size: 15px;
@@ -242,44 +232,48 @@ function isActive(label: string): boolean {
     text-align: left;
     cursor: pointer;
   }
-  .sheet-panel a.on {
+  .sheet-links a.on {
     color: var(--accent);
   }
-  .sheet-panel a:hover,
+  .sheet-links a:hover,
   .sheet-search:hover {
     background: var(--line);
   }
-  .search-panel {
-    position: absolute;
+
+  /* Search dialog as a command palette. */
+  :global(.search-panel) {
     top: 90px;
-    left: 50%;
-    transform: translateX(-50%);
+    margin: 0;
+    translate: -50% 0;
     width: min(560px, calc(100% - 24px));
-    background: var(--card);
-    border: 1px solid var(--line);
-    border-radius: 14px;
+    max-width: 560px;
+    padding: 0;
     overflow: hidden;
+    border-radius: 14px;
+    background: var(--card);
   }
-  #search-input {
-    width: 100%;
+  :global(.search-panel .search-box) {
     height: 48px;
-    padding: 0 16px;
     border: 0;
     border-bottom: 1px solid var(--line);
+    border-radius: 0;
     background: transparent;
-    color: var(--ink);
-    font-family: inherit;
-    font-size: 15px;
-    outline: none;
   }
-  #search-results {
+  :global(.search-panel .search-ic) {
+    padding-left: 16px;
+    color: var(--muted);
+  }
+  :global(#search-input) {
+    font-size: 15px;
+  }
+  :global(#search-results) {
     margin: 0;
     padding: 6px;
     list-style: none;
     max-height: 320px;
     overflow-y: auto;
   }
-  #search-results li a {
+  :global(#search-results li a) {
     display: flex;
     flex-direction: column;
     gap: 2px;
@@ -287,21 +281,21 @@ function isActive(label: string): boolean {
     border-radius: 8px;
     text-decoration: none;
   }
-  #search-results li.sel a,
-  #search-results li a:hover {
+  :global(#search-results li.sel a),
+  :global(#search-results li a:hover) {
     background: var(--line);
   }
-  #search-results .r-title {
+  :global(#search-results .r-title) {
     font-size: 14px;
     color: var(--ink);
   }
-  #search-results .r-title small {
+  :global(#search-results .r-title small) {
     color: var(--muted);
     font-weight: 400;
     margin-left: 8px;
     font-size: 12px;
   }
-  #search-results .r-desc {
+  :global(#search-results .r-desc) {
     font-size: 12px;
     color: var(--muted);
   }
@@ -346,7 +340,7 @@ function isActive(label: string): boolean {
     href: string;
   }
   let index: SearchEntry[] | undefined;
-  const dialog = document.getElementById("search");
+  const searchDialog = document.getElementById("site-search");
   const input = document.getElementById("search-input") as HTMLInputElement | null;
   const list = document.getElementById("search-results");
   let selected = 0;
@@ -374,10 +368,7 @@ function isActive(label: string): boolean {
   const lenisApi = () =>
     (window as { __lenis?: { stop(): void; start(): void } }).__lenis;
 
-  async function openSearch(): Promise<void> {
-    dialog?.removeAttribute("hidden");
-    document.getElementById("site-sheet")?.setAttribute("hidden", "");
-    lenisApi()?.stop();
+  async function onSearchOpen(): Promise<void> {
     input?.focus();
     if (index === undefined) {
       const res = await fetch("/search.json");
@@ -385,34 +376,34 @@ function isActive(label: string): boolean {
     }
     if (input) search(input.value);
   }
-  function closeSearch(): void {
-    dialog?.setAttribute("hidden", "");
-    lenisApi()?.start();
-  }
 
-  document.querySelectorAll("[data-open-search]").forEach((b) => b.addEventListener("click", () => void openSearch()));
-  document.querySelectorAll("[data-close-search]").forEach((b) => b.addEventListener("click", closeSearch));
-  document.querySelector("[data-open-menu]")?.addEventListener("click", () => {
-    document.getElementById("site-sheet")?.removeAttribute("hidden");
-    lenisApi()?.stop();
-  });
-  document.querySelectorAll("[data-close-menu], .sheet-panel a").forEach((b) =>
-    b.addEventListener("click", () => {
-      document.getElementById("site-sheet")?.setAttribute("hidden", "");
+  // Starwind dialogs/drawers dispatch starwind:open-change from their roots.
+  const onOpenChange = (e: Event) => {
+    if (!(e instanceof CustomEvent)) return;
+    const detail = e.detail as { open?: boolean };
+    const root = e.target as HTMLElement;
+    if (detail.open) {
+      lenisApi()?.stop();
+      if (root.id === "site-search") requestAnimationFrame(() => void onSearchOpen());
+    } else {
       lenisApi()?.start();
-    }),
-  );
+    }
+  };
+  searchDialog?.addEventListener("starwind:open-change", onOpenChange);
+  document.getElementById("site-sheet")?.addEventListener("starwind:open-change", onOpenChange);
 
+  const openSearch = () => {
+    document
+      .querySelector<HTMLElement>('[data-sw-dialog-trigger][data-sw-dialog-target-id="site-search"]')
+      ?.click();
+  };
   document.addEventListener("keydown", (e) => {
     if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "k") {
       e.preventDefault();
-      void openSearch();
+      openSearch();
     } else if (e.key === "/" && !(e.target instanceof HTMLInputElement) && !(e.target instanceof HTMLTextAreaElement)) {
       e.preventDefault();
-      void openSearch();
-    } else if (e.key === "Escape") {
-      closeSearch();
-      document.getElementById("site-sheet")?.setAttribute("hidden", "");
+      openSearch();
     }
   });
   input?.addEventListener("input", () => search(input.value));

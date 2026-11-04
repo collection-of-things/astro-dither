@@ -1,6 +1,30 @@
 import { describe, expect, it } from "vitest";
 import { effects } from "./effects";
-import { globePoint, parseCssColor, parseOrderedDither, studioCities } from "./ordered-dither";
+import { auroraPalette, globePoint, mixHex, parseCssColor, parseOrderedDither, studioCities } from "./ordered-dither";
+
+describe("auroraPalette", () => {
+  it("runs from the sky to a lightened edge colour", () => {
+    expect(auroraPalette("#000000", "#ff0000", "#0000ff")).toEqual(["#000000", "#730000", "#ff0000", "#0000ff", "#9999ff"]);
+  });
+
+  it("leaves non-hex colours unmixed", () => {
+    expect(mixHex("red", "#ffffff", 0.5)).toBe("red");
+  });
+});
+
+describe("levels and stillTime", () => {
+  it("defaults to every tone and the effect's own still time", () => {
+    const settings = parseOrderedDither({ effect: "plasma" });
+    expect(settings.levels).toBe(0);
+    expect(settings.stillTime).toBe(5);
+  });
+
+  it("rounds levels and keeps a custom still time", () => {
+    const settings = parseOrderedDither({ effect: "plasma", levels: 3.6, stillTime: 12 });
+    expect(settings.levels).toBe(4);
+    expect(settings.stillTime).toBe(12);
+  });
+});
 
 describe("parseOrderedDither", () => {
   it("falls back to the gradient effect for unknown names", () => {

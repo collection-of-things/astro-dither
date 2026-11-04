@@ -1,78 +1,44 @@
 ---
+import Check from "@tabler/icons/outline/check.svg";
+import Copy from "@tabler/icons/outline/copy.svg";
 import type { HTMLAttributes } from "astro/types";
+import { Button } from "../starwind/button";
+import Tooltip from "../starwind/tooltip";
 
 interface Props extends HTMLAttributes<"button"> {
   value: string;
   label?: string;
-  size?: "sm" | "md";
 }
 
-const { value, label = "Copy to clipboard", size = "md", class: className, ...rest } = Astro.props;
+const { value, label = "Copy to clipboard", class: className, ...rest } = Astro.props;
+const uid = `tip-${Math.random().toString(36).slice(2, 9)}`;
 ---
 
-<button
-  class:list={["copybtn", `s-${size}`, className]}
-  data-copybtn
-  data-value={value}
-  data-copied="false"
-  aria-label={label}
-  type="button"
-  {...rest}
->
-  <span class="sr-only" aria-live="polite" aria-atomic="true"></span>
-  <span class="ic-wrap" aria-hidden="true">
-    <svg class="ic ic-copy" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-      <rect x="9" y="9" width="13" height="13" rx="2" />
-      <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
-    </svg>
-    <svg class="ic ic-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-      <path class="tick" d="M20 6 9 17l-5-5" />
-    </svg>
-  </span>
-</button>
+<Tooltip.Root>
+  <Tooltip.Trigger>
+    <Button
+      variant="ghost"
+      size="icon-sm"
+      class:list={["copybtn", className]}
+      data-copybtn
+      data-value={value}
+      data-copied="false"
+      data-tip={uid}
+      aria-label={label}
+      type="button"
+      {...rest}
+    >
+      <span class="sr-only" aria-live="polite" aria-atomic="true"></span>
+      <span class="ic-wrap" aria-hidden="true">
+        <Copy class="ic ic-copy" />
+        <Check class="ic ic-check" />
+      </span>
+    </Button>
+  </Tooltip.Trigger>
+  <Tooltip.Content><span id={uid} data-tip-text>Copy</span></Tooltip.Content>
+</Tooltip.Root>
 
 <style>
-  .copybtn {
-    position: relative;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    flex: none;
-    border: 0;
-    border-radius: 8px;
-    background: transparent;
-    color: var(--muted);
-    cursor: pointer;
-    touch-action: manipulation;
-    transition:
-      color var(--t-hover, 200ms) ease,
-      background var(--t-hover, 200ms) ease,
-      transform 150ms ease;
-  }
-  .copybtn::before {
-    content: "";
-    position: absolute;
-    inset: -8px;
-  }
-  .copybtn:hover {
-    color: var(--ink);
-    background: var(--line);
-  }
-  .copybtn:active {
-    transform: scale(0.96);
-  }
-  .copybtn:focus-visible {
-    outline: 2px solid var(--accent);
-    outline-offset: 2px;
-  }
-  .s-sm {
-    width: 28px;
-    height: 28px;
-  }
-  .s-md {
-    width: 32px;
-    height: 32px;
-  }
   .ic-wrap {
     position: relative;
     display: inline-flex;
@@ -106,36 +72,9 @@ const { value, label = "Copy to clipboard", size = "md", class: className, ...re
     filter: blur(0);
     color: var(--accent);
   }
-  .tick {
-    stroke-dasharray: 23;
-    stroke-dashoffset: 23;
-  }
-  .copybtn[data-copied="true"] .tick {
-    animation: tick-draw 350ms ease forwards;
-  }
-  @keyframes tick-draw {
-    to {
-      stroke-dashoffset: 0;
-    }
-  }
-  .sr-only {
-    position: absolute;
-    width: 1px;
-    height: 1px;
-    overflow: hidden;
-    clip: rect(0 0 0 0);
-    white-space: nowrap;
-  }
   @media (prefers-reduced-motion: reduce) {
     .ic {
       transition: none;
-    }
-    .copybtn[data-copied="true"] .tick {
-      animation: none;
-      stroke-dashoffset: 0;
-    }
-    .copybtn:active {
-      transform: none;
     }
   }
 </style>
@@ -184,6 +123,9 @@ const { value, label = "Copy to clipboard", size = "md", class: className, ...re
     btn.setAttribute("aria-label", "Copied to clipboard");
     const live = btn.querySelector(".sr-only");
     if (live) live.textContent = "Copied";
+    const tipId = btn.getAttribute("data-tip");
+    const tip = tipId ? document.getElementById(tipId) : null;
+    if (tip) tip.textContent = "Copied";
     const prev = copyTimers.get(btn);
     if (prev) clearTimeout(prev);
     copyTimers.set(
@@ -192,6 +134,7 @@ const { value, label = "Copy to clipboard", size = "md", class: className, ...re
         btn.setAttribute("data-copied", "false");
         btn.setAttribute("aria-label", originalLabel);
         if (live) live.textContent = "";
+        if (tip) tip.textContent = "Copy";
       }, 2000),
     );
   });

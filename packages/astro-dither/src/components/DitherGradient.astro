@@ -14,12 +14,20 @@ interface Props {
   to?: number;
   /** Animation speed. 0 draws one still frame. */
   speed?: number;
+  /** Tones the field snaps to before dithering. Low values give hard steps. */
+  levels?: number;
+  /** The moment drawn when motion is off or reduced, in seconds. */
+  stillTime?: number;
+  /** Bloom around lit cells, 0 to 1. 0 adds none. CSS `--dither-bloom` overrides it, for hover states. */
+  bloom?: number;
+  /** Bloom blur in CSS pixels. CSS `--dither-bloom-radius` overrides it. */
+  bloomRadius?: number;
   cell?: number;
   matrix?: 2 | 4 | 8 | "noise";
   palette?: string[];
 }
 
-const { class: className, mode = "radial", palette, angle, centerX, centerY, radius, from, to, speed, cell, matrix } = Astro.props;
+const { class: className, mode = "radial", palette, angle, centerX, centerY, radius, from, to, speed, levels, stillTime, bloom, bloomRadius, cell, matrix } = Astro.props;
 const encoded = orderedDitherAttribute({
   effect: "gradient",
   params: { mode: MODE_NUMBERS[mode], angle, cx: centerX, cy: centerY, radius, from, to },
@@ -27,6 +35,10 @@ const encoded = orderedDitherAttribute({
   cell,
   matrix,
   speed,
+  levels,
+  stillTime,
+  bloom,
+  bloomRadius,
 });
 ---
 

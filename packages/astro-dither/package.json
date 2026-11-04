@@ -29,7 +29,8 @@
     "./DitherAurora.astro": "./src/components/DitherAurora.astro",
     "./DitherEffect.astro": "./src/components/DitherEffect.astro",
     "./DitherGlobe.astro": "./src/components/DitherGlobe.astro",
-    "./effects": "./src/lib/effects.ts"
+    "./effects": "./src/lib/effects.ts",
+    "./assets/land.png": "./src/assets/land.png"
   },
   "files": [
     "src",

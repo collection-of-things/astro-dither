@@ -1,6 +1,11 @@
 ---
 import type { ControlSpec } from "../../docs/components";
-import { PALETTE_PRESETS } from "../../docs/registry";
+import { Code } from "astro-expressive-code/components";
+import { Button } from "../starwind/button";
+import Dialog from "../starwind/dialog";
+import Tabs from "../starwind/tabs";
+import { Skeleton } from "../starwind/skeleton";
+import DemoControlGrid from "./DemoControlGrid.astro";
 
 interface Props {
   /** Custom element tag rendered inside the preview. */
@@ -9,13 +14,17 @@ interface Props {
   seed: Record<string, unknown>;
   /** Code frame, e.g. `<DitherEffect {props} />`. */
   tpl: string;
-  /** Label text before the code, e.g. the component tag. */
+  /** The component's own controls, shown first. */
   controls?: ControlSpec[];
   palettes?: boolean;
   matrix?: boolean;
   cell?: boolean;
   speed?: boolean;
   animate?: boolean;
+  /** Show the shared levels, still time and bloom sliders. */
+  extras?: boolean;
+  /** Print params as their own props (`<DitherAurora rays={8} />`) instead of a `params` object. */
+  flatParams?: boolean;
   /** Inner HTML kept inside a remounted dither-image. */
   imgHtml?: string;
 }
@@ -30,14 +39,63 @@ const {
   cell = false,
   speed = false,
   animate = false,
+  extras = false,
+  flatParams = false,
   imgHtml = "",
 } = Astro.props;
 
+// The engine controls every ordered effect shares, appended after the component's own.
+const shared: ControlSpec[] = [
+  ...(matrix
+    ? [
+        {
+          kind: "select",
+          key: "matrix",
+          label: "Matrix",
+          group: "Render",
+          options: [
+            { value: "2", label: "bayer2" },
+            { value: "4", label: "bayer4" },
+            { value: "8", label: "bayer8" },
+            { value: "noise", label: "noise" },
+          ],
+        } satisfies ControlSpec,
+      ]
+    : []),
+  ...(cell ? [{ kind: "slider", key: "cell", label: "Cell", min: 1, max: 8, step: 0.5, unit: "px", group: "Render" } satisfies ControlSpec] : []),
+  ...(speed ? [{ kind: "slider", key: "speed", label: "Speed", min: 0, max: 3, step: 0.1, group: "Render" } satisfies ControlSpec] : []),
+  ...(extras
+    ? ([
+        { kind: "slider", key: "levels", label: "Levels", min: 0, max: 16, step: 1, group: "Render" },
+        { kind: "slider", key: "stillTime", label: "Still time", min: 0, max: 60, step: 0.5, unit: "s", group: "Render" },
+        { kind: "slider", key: "bloom", label: "Bloom", min: 0, max: 1, step: 0.05, group: "Render" },
+        { kind: "slider", key: "bloomRadius", label: "Bloom radius", min: 0, max: 40, step: 1, unit: "px", group: "Render" },
+      ] satisfies ControlSpec[])
+    : []),
+  ...(animate ? [{ kind: "toggle", key: "animate", label: "Animate", group: "Render" } satisfies ControlSpec] : []),
+];
+const all = [...controls, ...shared];
+
+// Control tabs in order of first appearance; ungrouped controls land in "Effect".
+const groups: { name: string; controls: ControlSpec[] }[] = [];
+for (const c of all) {
+  const name = c.group ?? "Effect";
+  const g = groups.find((g) => g.name === name);
+  if (g) g.controls.push(c);
+  else groups.push({ name, controls: [c] });
+}
+// Palette presets sit with the colour controls when the page has them, else with render.
+const paletteGroup = groups.some((g) => g.name === "Colour") ? "Colour" : "Render";
+
+const uid = Math.random().toString(36).slice(2, 9);
 const seedJson = JSON.stringify(seed);
 
 const propCode = (obj: Record<string, unknown>) =>
   Object.entries(obj)
-    .map(([k, v]) => `${k}={${JSON.stringify(v)}}`)
+    .flatMap(([k, v]) =>
+      flatParams && k === "params" && typeof v === "object" && v !== null ? Object.entries(v) : flatParams && k === "effect" ? [] : [[k, v]],
+    )
+    .map(([k, v]) => (typeof v === "string" ? `${k}="${v}"` : `${k}={${JSON.stringify(v)}}`))
     .join(" ");
 const initialCode = tpl.replace("{props}", propCode(seed));
 ---
@@ -49,157 +107,69 @@ const initialCode = tpl.replace("{props}", propCode(seed));
   data-seed={seedJson}
   data-tpl={tpl}
   data-img={imgHtml}
+  data-flat={flatParams ? "1" : undefined}
 >
-  <div class="demo-card">
+  <Tabs.Root defaultValue="preview" class="demo-card">
     <div class="demo-bar">
-      <div class="demo-tabs">
-        <button class="dtab on" type="button" data-tab="preview">Preview</button>
-        <button class="dtab" type="button" data-tab="code">Code</button>
-      </div>
+      <Tabs.List class="demo-tabs">
+        <Tabs.Trigger value="preview" class="dtab">Preview</Tabs.Trigger>
+        <Tabs.Trigger value="code" class="dtab">Code</Tabs.Trigger>
+      </Tabs.List>
       <div class="demo-tools">
-        {controls.length > 0 && (
-          <button class="dtool" type="button" data-toggle-ctl aria-expanded="false">Controls</button>
+        {all.length > 0 && (
+          <Button variant="ghost" size="sm" class="dtool" data-toggle-ctl aria-expanded="false">Controls</Button>
         )}
-        <button class="dtool" type="button" data-replay>Replay</button>
-        <button class="dtool" type="button" data-expand>Expand</button>
+        <Button variant="ghost" size="sm" class="dtool" data-replay>Replay</Button>
+        <Button variant="ghost" size="sm" class="dtool" data-sw-dialog-trigger data-sw-dialog-target-id={`${uid}-expand`}>Expand</Button>
       </div>
     </div>
-    <div class="demo-live" data-live>
-      <slot />
-    </div>
-    <pre class="demo-code" data-code hidden><code>{initialCode}</code></pre>
-  </div>
-
-  {controls.length > 0 && (
-    <div class="controls" data-controls hidden>
-      <div class="ctl-grid">
-        {controls.map((c) =>
-          c.kind === "slider" ? (
-            <label class="ctl">
-              <span class="ctl-name">
-                {c.label}
-                <output class="ctl-val" data-out={c.key}>
-                  {String((c.param ? (seed.params as Record<string, number> | undefined)?.[c.key] : seed[c.key]) ?? 0)}
-                </output>
-              </span>
-              <input
-                type="range"
-                min={c.min}
-                max={c.max}
-                step={c.step}
-                value={String((c.param ? (seed.params as Record<string, number> | undefined)?.[c.key] : seed[c.key]) ?? c.min)}
-                data-key={c.key}
-                data-param={c.param ? "1" : undefined}
-              />
-            </label>
-          ) : c.kind === "select" ? (
-            <div class="ctl">
-              <span class="ctl-name">{c.label}</span>
-              <span class="seg">
-                {c.options.map((o) => (
-                  <button
-                    class:list={["seg-btn", { on: String((c.param ? (seed.params as Record<string, number> | undefined)?.[c.key] : seed[c.key]) ?? "") === o.value }]}
-                    type="button"
-                    data-key={c.key}
-                    data-value={o.value}
-                    data-param={c.param ? "1" : undefined}
-                  >
-                    {o.label}
-                  </button>
-                ))}
-              </span>
-            </div>
-          ) : c.kind === "triplet" ? (
-            <div class="ctl">
-              <span class="ctl-name">{c.label}</span>
-              <span class="seg">
-                {c.options.map((o) => (
-                  <button class="seg-btn" type="button" data-triplet={o.value}>
-                    {o.label}
-                  </button>
-                ))}
-              </span>
-            </div>
-          ) : (
-            <label class="ctl tgl">
-              <span class="ctl-name">{c.label}</span>
-              <input
-                type="checkbox"
-                checked={Boolean((c.param ? (seed.params as Record<string, number> | undefined)?.[c.key] : seed[c.key]) ?? false)}
-                data-key={c.key}
-                data-param={c.param ? "1" : undefined}
-              />
-            </label>
-          ),
-        )}
+    <Tabs.Content value="preview" class="mt-0">
+      <div class="demo-live" data-live>
+        <Skeleton class="absolute inset-0 z-10 rounded-none" data-skeleton />
+        <slot />
       </div>
-      {palettes && (
-        <div class="ctl pal-row">
-          <span class="ctl-name">Palette</span>
-          <span class="seg pals">
-            {PALETTE_PRESETS.map((p) => (
-              <button
-                class="pal-btn"
-                type="button"
-                data-pal={JSON.stringify(p.colors)}
-                title={p.name}
-                aria-label={`Palette ${p.name}`}
-              >
-                {p.colors.slice(-3).map((c) => (
-                  <span class="pal-dot" style={`background:${c === "transparent" ? "transparent" : c};border:1px solid var(--line)`} />
+      {
+        all.length > 0 && (
+          <div class="controls" data-controls hidden>
+            {groups.length > 1 ? (
+              <Tabs.Root defaultValue={groups[0]!.name} class="ctl-groups">
+                <Tabs.List class="ctl-grouplist">
+                  {groups.map((g) => (
+                    <Tabs.Trigger value={g.name} class="gtab">
+                      {g.name}
+                    </Tabs.Trigger>
+                  ))}
+                </Tabs.List>
+                {groups.map((g, gi) => (
+                  <Tabs.Content value={g.name} hidden={gi > 0}>
+                    <DemoControlGrid
+                      controls={g.controls}
+                      seed={seed}
+                      uid={uid}
+                      palettes={palettes && g.name === paletteGroup}
+                    />
+                  </Tabs.Content>
                 ))}
-              </button>
-            ))}
-          </span>
-        </div>
-      )}
-      {(matrix || cell || speed || animate) && (
-        <div class="ctl-grid shared">
-          {matrix && (
-            <div class="ctl">
-              <span class="ctl-name">Matrix</span>
-              <span class="seg">
-                {["2", "4", "8", "noise"].map((m) => (
-                  <button
-                    class:list={["seg-btn", { on: String(seed.matrix ?? 8) === m }]}
-                    type="button"
-                    data-key="matrix"
-                    data-value={m}
-                  >
-                    {m}
-                  </button>
-                ))}
-              </span>
-            </div>
-          )}
-          {cell && (
-            <label class="ctl">
-              <span class="ctl-name">
-                Cell
-                <output class="ctl-val" data-out="cell">{String(seed.cell ?? 2)}</output>
-              </span>
-              <input type="range" min="1" max="8" step="1" value={String(seed.cell ?? 2)} data-key="cell" />
-            </label>
-          )}
-          {speed && (
-            <label class="ctl">
-              <span class="ctl-name">
-                Speed
-                <output class="ctl-val" data-out="speed">{String(seed.speed ?? 1)}</output>
-              </span>
-              <input type="range" min="0" max="3" step="0.1" value={String(seed.speed ?? 1)} data-key="speed" />
-            </label>
-          )}
-          {animate && (
-            <label class="ctl tgl">
-              <span class="ctl-name">Animate</span>
-              <input type="checkbox" checked={typeof seed.speed === "number" ? seed.speed > 0 : true} data-key="animate" />
-            </label>
-          )}
-        </div>
-      )}
-    </div>
-  )}
+              </Tabs.Root>
+            ) : (
+              <DemoControlGrid controls={groups[0]!.controls} seed={seed} uid={uid} palettes={palettes && groups[0]!.name === paletteGroup} />
+            )}
+          </div>
+        )
+      }
+    </Tabs.Content>
+    <Tabs.Content value="code" hidden class="mt-0">
+      <div class="demo-code" data-code>
+        <Code code={initialCode} lang="astro" frame="code" title="src/pages/index.astro" />
+      </div>
+    </Tabs.Content>
+  </Tabs.Root>
+  <Dialog.Root id={`${uid}-expand`}>
+    <Dialog.Content class="expand-dialog" aria-label="Expanded preview">
+      <Dialog.Title class="sr-only">Expanded preview</Dialog.Title>
+      <div class="expand-live" data-expand-live></div>
+    </Dialog.Content>
+  </Dialog.Root>
 </div>
 
 <style>
@@ -216,12 +186,15 @@ const initialCode = tpl.replace("{props}", propCode(seed));
     display: flex;
     align-items: center;
     justify-content: space-between;
+    gap: 10px;
     padding: 6px 10px;
     border-bottom: 1px solid var(--line);
     background: #14161a;
   }
   .demo-tabs {
-    display: flex;
+    flex: none;
+    background: transparent;
+    padding: 0;
     gap: 4px;
   }
   .dtab {
@@ -235,7 +208,10 @@ const initialCode = tpl.replace("{props}", propCode(seed));
     cursor: pointer;
     transition: color var(--t-hover) ease, background var(--t-hover) ease;
   }
-  .dtab.on {
+  .dtab:hover {
+    color: var(--ink);
+  }
+  .dtab[data-state="active"] {
     background: var(--line);
     color: var(--ink);
   }
@@ -244,15 +220,11 @@ const initialCode = tpl.replace("{props}", propCode(seed));
     gap: 4px;
   }
   .dtool {
-    border: 0;
-    background: transparent;
-    color: var(--muted);
-    font-family: inherit;
+    height: 26px;
+    padding: 0 10px;
     font-size: 12px;
-    padding: 4px 10px;
-    border-radius: 7px;
-    cursor: pointer;
-    transition: color var(--t-hover) ease;
+    font-weight: 400;
+    color: var(--muted);
   }
   .dtool:hover {
     color: var(--ink);
@@ -269,123 +241,69 @@ const initialCode = tpl.replace("{props}", propCode(seed));
     height: 100%;
     display: block;
   }
+  /* The > * display:block above would beat [hidden], so give it the stronger rule. */
+  :global(.demo-live > [hidden]),
+  :global(.expand-live > [hidden]) {
+    display: none;
+  }
   .demo-code {
+    padding: 0;
+  }
+  .demo-code :global(.expressive-code) {
     margin: 0;
-    padding: 18px 20px;
-    font-family: "Geist Mono", ui-monospace, monospace;
-    font-size: 13px;
-    color: var(--ink);
-    white-space: pre-wrap;
-    word-break: break-word;
+    height: 100%;
+    border: 0;
+    border-radius: 0;
   }
+
+  /* Controls live inside the card, below the preview. */
   .controls {
-    margin-top: 12px;
-    padding: 14px 16px;
-    border: 1px solid var(--line);
-    border-radius: 14px;
-    background: var(--card);
-  }
-  .ctl-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-    gap: 12px 20px;
-  }
-  .ctl-grid.shared {
-    margin-top: 12px;
-    padding-top: 12px;
+    padding: 14px 18px 18px;
     border-top: 1px solid var(--line);
   }
-  .ctl {
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-    font-size: 13px;
+  /* Group tabs: a dark pill track, the active group raised. */
+  .ctl-grouplist {
+    width: fit-content;
+    gap: 2px;
+    padding: 3px;
+    border-radius: 999px;
+    background: #1b1d21;
+    margin-bottom: 14px;
+  }
+  .gtab {
+    border: 0;
+    background: transparent;
     color: var(--muted);
-  }
-  .ctl-name {
-    display: flex;
-    justify-content: space-between;
-    font-size: 12px;
-  }
-  .ctl-val {
     font-family: "Geist Mono", ui-monospace, monospace;
     font-size: 12px;
-    color: var(--ink);
-  }
-  .ctl input[type="range"] {
-    width: 100%;
-    accent-color: var(--accent);
-    height: 18px;
-    margin: 0;
-  }
-  .seg {
-    display: inline-flex;
-    gap: 2px;
-    flex-wrap: wrap;
-  }
-  .seg-btn {
-    border: 1px solid var(--line);
-    background: transparent;
-    color: var(--muted);
-    font-family: inherit;
-    font-size: 12px;
-    padding: 3px 10px;
-    border-radius: 6px;
+    padding: 4px 10px;
+    border-radius: 999px;
     cursor: pointer;
+    white-space: nowrap;
     transition: color var(--t-hover) ease, background var(--t-hover) ease;
   }
-  .seg-btn.on {
-    background: var(--line);
+  .gtab:hover {
     color: var(--ink);
   }
-  .tgl {
-    flex-direction: row;
-    align-items: center;
-    justify-content: space-between;
+  .gtab[data-state="active"] {
+    background: #2e3137;
+    color: var(--ink);
   }
-  .tgl input {
-    accent-color: var(--accent);
-    width: 16px;
-    height: 16px;
-  }
-  .pal-row {
-    flex-direction: row;
-    align-items: center;
-    justify-content: space-between;
-    margin-top: 12px;
-  }
-  .pals {
-    gap: 6px;
-  }
-  .pal-btn {
-    display: inline-flex;
-    align-items: center;
-    gap: 2px;
-    padding: 4px;
-    border: 1px solid var(--line);
-    border-radius: 8px;
-    background: transparent;
-    cursor: pointer;
-  }
-  .pal-btn:hover {
-    border-color: #262a31;
-  }
-  .pal-dot {
-    width: 14px;
-    height: 14px;
-    border-radius: 4px;
-    display: block;
-  }
-  :global(.expand-ov) {
-    position: fixed;
+
+  /* The expand dialog fills the viewport. */
+  :global(.expand-dialog) {
     inset: 0;
-    z-index: 200;
-  }
-  :global(.expand-back) {
-    position: absolute;
-    inset: 0;
+    top: 0;
+    left: 0;
+    translate: none;
+    width: 100%;
+    max-width: none;
+    height: 100%;
+    max-height: none;
+    padding: 0;
+    border: 0;
+    border-radius: 0;
     background: #000;
-    opacity: 0.92;
   }
   :global(.expand-live) {
     position: absolute;
@@ -401,57 +319,103 @@ const initialCode = tpl.replace("{props}", propCode(seed));
 </style>
 
 <script>
+  import { auroraPalette } from "astro-dither";
+
+  const COLOR_KEYS = ["color", "tipColor", "background"] as const;
+
   document.querySelectorAll<HTMLElement>("[data-demo]").forEach((demo) => {
+    const flat = demo.dataset.flat === "1";
     const element = demo.dataset.element ?? "dither-surface";
     const tpl = demo.dataset.tpl ?? "";
     const imgHtml = demo.dataset.img ?? "";
     const state: Record<string, unknown> = JSON.parse(demo.dataset.seed ?? "{}");
     const live = demo.querySelector<HTMLElement>("[data-live]");
-    const codeEl = demo.querySelector<HTMLElement>("[data-code] code");
-    const codeBox = demo.querySelector<HTMLElement>("[data-code]");
+    // The code tab is an Expressive Code frame: update its <code> text and the
+    // copy button's data-code so it always copies the live snippet.
+    const codeEl = demo.querySelector<HTMLElement>("[data-code] .expressive-code pre code");
+    const codeCopy = demo.querySelector<HTMLElement>("[data-code] .copy");
     const ctlBox = demo.querySelector<HTMLElement>("[data-controls]");
+    const skeleton = demo.querySelector<HTMLElement>("[data-skeleton]");
     const defaultSpeed = Number(state.speed ?? 1) || 1;
+
+    let skeletonTimer: number | undefined;
+    const showSkeleton = (target: HTMLElement) => {
+      target.hidden = false;
+      window.clearTimeout(skeletonTimer);
+      skeletonTimer = window.setTimeout(() => {
+        target.hidden = true;
+      }, 2000);
+    };
+    if (skeleton && live) {
+      // The element may have drawn before this script ran.
+      if (live.querySelector("[data-dither-ready]")) skeleton.hidden = true;
+      else showSkeleton(skeleton);
+      live.addEventListener("dither:ready", () => {
+        if (skeleton) skeleton.hidden = true;
+        window.clearTimeout(skeletonTimer);
+      });
+    }
 
     const propCode = () =>
       Object.entries(state)
-        .map(([k, v]) => `${k}={${JSON.stringify(v)}}`)
+        .flatMap(([k, v]): [string, unknown][] =>
+          flat && k === "params" && typeof v === "object" && v !== null ? Object.entries(v) : flat && k === "effect" ? [] : [[k, v]],
+        )
+        .map(([k, v]) => (typeof v === "string" ? `${k}="${v}"` : `${k}={${JSON.stringify(v)}}`))
         .join(" ");
-    const renderCode = () => {
-      if (codeEl) codeEl.textContent = tpl.replace("{props}", propCode());
-    };
-    const remount = () => {
-      if (!live) return;
-      // Merge over the current element's data so asset keys like `src` survive.
-      const cur = live.querySelector<HTMLElement>("[data-dither]");
-      let base: Record<string, unknown> = {};
-      try {
-        base = JSON.parse(cur?.dataset.dither ?? "{}") as Record<string, unknown>;
-      } catch {
-        base = {};
+    // Colour props stand in for a palette, the way DitherAurora builds one.
+    const engineData = (): Record<string, unknown> => {
+      const data: Record<string, unknown> = { ...state };
+      const hasColor = COLOR_KEYS.some((k) => typeof state[k] === "string");
+      if (hasColor && state.palette === undefined) {
+        const edge = typeof state.color === "string" ? state.color : "#1f8fff";
+        const tip = typeof state.tipColor === "string" ? state.tipColor : edge;
+        const sky = typeof state.background === "string" ? state.background : "#02060d";
+        data.palette = auroraPalette(sky, tip, edge);
       }
-      const data = { ...base, ...state };
+      return data;
+    };
+    const currentData = (): Record<string, unknown> => {
+      try {
+        return JSON.parse(live?.querySelector<HTMLElement>("[data-dither]")?.dataset.dither ?? "{}") as Record<string, unknown>;
+      } catch {
+        return {};
+      }
+    };
+    const renderCode = () => {
+      const text = tpl.replace("{props}", propCode());
+      if (codeEl) codeEl.textContent = text;
+      codeCopy?.setAttribute("data-code", text);
+    };
+    const remount = (withSkeleton = false) => {
+      if (!live) return;
+      if (withSkeleton && skeleton) showSkeleton(skeleton);
+      // Merge over the current element's data so asset keys like `src` survive.
+      const data = { ...currentData(), ...engineData() };
       const el = document.createElement(element);
       el.setAttribute("data-dither", JSON.stringify(data));
       el.setAttribute("aria-hidden", "true");
       if (imgHtml) el.innerHTML = imgHtml;
       live.replaceChildren(el);
+      if (skeleton) live.prepend(skeleton);
       renderCode();
     };
     const setOut = (key: string, v: unknown) => {
       const out = demo.querySelector<HTMLOutputElement>(`[data-out="${key}"]`);
-      if (out) out.textContent = String(v);
+      if (out) out.textContent = `${String(v)}${out.dataset.unit ?? ""}`;
+    };
+    const lenisApi = () =>
+      (window as { __lenis?: { stop(): void; start(): void } }).__lenis;
+    // Swatch groups manage their own ring: the toggle-group change is cancelled
+    // (it's a pick action, not a selection), so we mark the dot ourselves.
+    const markChosen = (group: Element, value: string) => {
+      group.querySelectorAll<HTMLElement>("[data-sw-toggle]").forEach((b) => {
+        const on = b.dataset.value === value;
+        b.toggleAttribute("data-on", on);
+        b.setAttribute("aria-pressed", String(on));
+      });
     };
 
-    // Tabs
-    demo.querySelectorAll<HTMLElement>("[data-tab]").forEach((tab) => {
-      tab.addEventListener("click", () => {
-        demo.querySelectorAll("[data-tab]").forEach((t) => t.classList.remove("on"));
-        tab.classList.add("on");
-        const showCode = tab.dataset.tab === "code";
-        if (live) live.hidden = showCode;
-        if (codeBox) codeBox.hidden = !showCode;
-      });
-    });
     // Controls toggle
     demo.querySelector("[data-toggle-ctl]")?.addEventListener("click", (e) => {
       const btn = e.currentTarget as HTMLElement;
@@ -460,95 +424,112 @@ const initialCode = tpl.replace("{props}", propCode(seed));
       btn.setAttribute("aria-expanded", String(open));
     });
     // Replay
-    demo.querySelector("[data-replay]")?.addEventListener("click", remount);
-    // Expand
-    demo.querySelector("[data-expand]")?.addEventListener("click", () => {
-      const ov = document.createElement("div");
-      ov.className = "expand-ov";
-      ov.innerHTML = `<div class="expand-back"></div><div class="expand-live"></div>`;
-      ov.querySelector(".expand-back")?.addEventListener("click", () => ov.remove());
-      const target = ov.querySelector(".expand-live");
-      if (target) {
-        const el = document.createElement(element);
-        el.setAttribute("data-dither", JSON.stringify(state));
-        el.setAttribute("aria-hidden", "true");
-        if (imgHtml) el.innerHTML = imgHtml;
-        target.appendChild(el);
+    demo.querySelector("[data-replay]")?.addEventListener("click", () => remount(true));
+    // Expand: a full-screen dialog whose live area is filled on open.
+    const expandRoot = demo.querySelector<HTMLElement>("[data-sw-dialog]");
+    const expandLive = demo.querySelector<HTMLElement>("[data-expand-live]");
+    expandRoot?.addEventListener("starwind:open-change", (e) => {
+      if (!(e instanceof CustomEvent)) return;
+      const open = (e.detail as { open?: boolean }).open === true;
+      if (!open) {
+        lenisApi()?.start();
+        return;
       }
-      document.body.appendChild(ov);
-      const esc = (e: KeyboardEvent) => {
-        if (e.key === "Escape") {
-          ov.remove();
-          document.removeEventListener("keydown", esc);
-        }
-      };
-      document.addEventListener("keydown", esc);
+      lenisApi()?.stop();
+      if (!expandLive) return;
+      expandLive.replaceChildren();
+      if (skeleton) {
+        const cover = skeleton.cloneNode(true) as HTMLElement;
+        cover.hidden = false;
+        expandLive.appendChild(cover);
+        expandLive.addEventListener("dither:ready", () => (cover.hidden = true));
+        window.setTimeout(() => (cover.hidden = true), 2000);
+      }
+      const el = document.createElement(element);
+      el.setAttribute("data-dither", JSON.stringify({ ...currentData(), ...engineData() }));
+      el.setAttribute("aria-hidden", "true");
+      if (imgHtml) el.innerHTML = imgHtml;
+      expandLive.appendChild(el);
     });
 
-    // Slider + toggle + select controls
-    demo.querySelectorAll<HTMLInputElement>("input[data-key]").forEach((input) => {
-      input.addEventListener("input", () => {
-        const key = input.dataset.key ?? "";
-        const param = input.dataset.param === "1";
-        let v: unknown;
-        if (input.type === "checkbox") {
-          if (key === "animate") {
-            v = input.checked ? defaultSpeed : 0;
-            state.speed = v;
-            setOut("speed", v);
-            remount();
-            return;
-          }
-          v = input.checked;
-        } else {
-          v = Number(input.value);
-        }
-        if (param) {
-          const params = (state.params ?? {}) as Record<string, number>;
-          params[key] = v as number;
-          state.params = params;
-        } else {
-          state[key] = v;
-        }
-        setOut(key, v);
+    const setValue = (key: string, param: boolean, v: unknown) => {
+      if (param) {
+        const params = (state.params ?? {}) as Record<string, unknown>;
+        params[key] = v;
+        state.params = params;
+      } else {
+        state[key] = v;
+      }
+    };
+    const numOrRaw = (raw: string) => (Number.isNaN(Number(raw)) ? raw : Number(raw));
+
+    // Starwind controls emit on their roots, where data-key/data-param also land.
+    demo.addEventListener("starwind:value-change", (e) => {
+      if (!(e instanceof CustomEvent)) return;
+      const root = e.target as HTMLElement;
+      const detail = e.detail as { value?: unknown; toggleValue?: string };
+      if (root.hasAttribute("data-sw-slider")) {
+        const raw = Array.isArray(detail.value) ? detail.value[0] : detail.value;
+        if (typeof raw !== "number") return;
+        setValue(root.dataset.key ?? "", root.dataset.param === "1", raw);
+        setOut(root.dataset.key ?? "", raw);
         remount();
-      });
-    });
-    demo.querySelectorAll<HTMLElement>("button[data-key][data-value]").forEach((btn) => {
-      btn.addEventListener("click", () => {
-        const key = btn.dataset.key ?? "";
-        const param = btn.dataset.param === "1";
-        const raw = btn.dataset.value ?? "";
-        const v: unknown = Number.isNaN(Number(raw)) ? raw : Number(raw);
-        if (param) {
-          const params = (state.params ?? {}) as Record<string, number>;
-          params[key] = v as number;
-          state.params = params;
-        } else {
-          state[key] = v;
-        }
-        const seg = btn.closest(".seg");
-        seg?.querySelectorAll(".seg-btn").forEach((b) => b.classList.remove("on"));
-        btn.classList.add("on");
+      } else if (root.dataset.swatches !== undefined) {
+        // Colour dots: a pick, not a selection — cancel the group state and ring the dot.
+        e.preventDefault();
+        const v = detail.toggleValue;
+        if (typeof v !== "string" || v === "") return;
+        state[root.dataset.key ?? ""] = v;
+        delete state.palette;
+        // The cancelled change resets aria-pressed; mark the dot after it settles.
+        requestAnimationFrame(() => markChosen(root, v));
         remount();
-      });
-    });
-    // Palette presets
-    demo.querySelectorAll<HTMLElement>("[data-pal]").forEach((btn) => {
-      btn.addEventListener("click", () => {
-        state.palette = JSON.parse(btn.dataset.pal ?? "[]");
+      } else if (root.dataset.pals !== undefined) {
+        // Palette presets clear the colour props.
+        e.preventDefault();
+        const raw = detail.toggleValue;
+        if (typeof raw !== "string" || raw === "") return;
+        state.palette = JSON.parse(raw);
+        for (const k of COLOR_KEYS) delete state[k];
+        demo.querySelectorAll<HTMLElement>("[data-sw-toggle][data-on]").forEach((s) => {
+          s.removeAttribute("data-on");
+          s.setAttribute("aria-pressed", "false");
+        });
         remount();
-      });
-    });
-    // Colour-triplet presets (DitherImage)
-    demo.querySelectorAll<HTMLElement>("[data-triplet]").forEach((btn) => {
-      btn.addEventListener("click", () => {
-        const [back, front, hi] = (btn.dataset.triplet ?? "").split(",");
+      } else if (root.dataset.triplet === "1") {
+        // Colour-triplet presets (DitherImage)
+        e.preventDefault();
+        const v = detail.toggleValue ?? (Array.isArray(detail.value) ? detail.value[0] : undefined);
+        const [back, front, hi] = String(v ?? "").split(",");
         if (back) state.colorBack = back;
         if (front) state.colorFront = front;
         if (hi) state.colorHighlight = hi;
         remount();
-      });
+      } else if (root.hasAttribute("data-sw-toggle-group") || root.hasAttribute("data-sw-select")) {
+        const key = root.dataset.key;
+        if (key === undefined) return;
+        const raw = Array.isArray(detail.value) ? detail.value[0] : detail.value;
+        if (raw === undefined || raw === null) {
+          // Single-choice groups keep one option pressed.
+          e.preventDefault();
+          return;
+        }
+        setValue(key, root.dataset.param === "1", numOrRaw(String(raw)));
+        remount();
+      }
+    });
+    demo.addEventListener("starwind:checked-change", (e) => {
+      if (!(e instanceof CustomEvent)) return;
+      const root = e.target as HTMLElement;
+      if (!root.hasAttribute("data-sw-switch")) return;
+      const checked = (e.detail as { checked?: boolean }).checked === true;
+      if (root.dataset.key === "animate") {
+        state.speed = checked ? defaultSpeed : 0;
+        setOut("speed", state.speed);
+      } else {
+        setValue(root.dataset.key ?? "", root.dataset.param === "1", checked);
+      }
+      remount();
     });
     renderCode();
   });

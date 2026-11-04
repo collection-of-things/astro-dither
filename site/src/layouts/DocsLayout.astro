@@ -1,5 +1,8 @@
 ---
 import Base from "./Base.astro";
+import { Button } from "../components/starwind/button";
+import Card from "../components/starwind/card";
+import Sheet from "../components/starwind/sheet";
 import { NAV, neighbours } from "../docs/nav";
 import pkg from "../../../packages/astro-dither/package.json";
 
@@ -23,34 +26,36 @@ const mdPath = md ?? `${href === "/docs" ? "/docs" : href}.md`;
 ---
 
 <Base title={`${title} | astro-dither docs`} description={description}>
-  <button class="drawer-btn" type="button" data-open-drawer>
+  <button class="drawer-btn" type="button" data-sw-drawer-trigger data-sw-drawer-target-id="docs-drawer">
     <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M3 6h18M3 12h18M3 18h18" /></svg>
     Menu
   </button>
-  <div class="drawer" id="docs-drawer" hidden>
-    <div class="drawer-back" data-close-drawer></div>
-    <aside class="drawer-panel">
-      {NAV.map((s) => (
-        <div class="nav-sec">
-          {s.collapsible ? (
-            <details open>
-              <summary class="nav-head nav-summary">{s.title}{s.count ? ` (${s.count})` : ""}</summary>
-              {s.items.map((i) => (
-                <a class:list={["nav-item", { on: i.href === href }]} href={i.href}>{i.title}</a>
-              ))}
-            </details>
-          ) : (
-            <>
-              <p class="nav-head">{s.title}{s.count ? ` (${s.count})` : ""}</p>
-              {s.items.map((i) => (
-                <a class:list={["nav-item", { on: i.href === href }]} href={i.href}>{i.title}</a>
-              ))}
-            </>
-          )}
-        </div>
-      ))}
-    </aside>
-  </div>
+  <Sheet.Root id="docs-drawer">
+    <Sheet.Content side="left" class="docs-drawer bg-card">
+      <Sheet.Title class="sr-only">Docs menu</Sheet.Title>
+      <nav class="drawer-nav" aria-label="Docs">
+        {NAV.map((s) => (
+          <div class="nav-sec">
+            {s.collapsible ? (
+              <details open>
+                <summary class="nav-head nav-summary">{s.title}{s.count ? ` (${s.count})` : ""}</summary>
+                {s.items.map((i) => (
+                  <a class:list={["nav-item", { on: i.href === href }]} href={i.href} data-sw-drawer-close>{i.title}</a>
+                ))}
+              </details>
+            ) : (
+              <>
+                <p class="nav-head">{s.title}{s.count ? ` (${s.count})` : ""}</p>
+                {s.items.map((i) => (
+                  <a class:list={["nav-item", { on: i.href === href }]} href={i.href} data-sw-drawer-close>{i.title}</a>
+                ))}
+              </>
+            )}
+          </div>
+        ))}
+      </nav>
+    </Sheet.Content>
+  </Sheet.Root>
 
   <div class="docs-wrap">
     <aside class="side">
@@ -81,14 +86,14 @@ const mdPath = md ?? `${href === "/docs" ? "/docs" : href}.md`;
           <p class="doc-desc">{description}</p>
         </div>
         <div class="doc-actions">
-          <button class="copy-page" type="button" data-copy-page={mdPath}>Copy page</button>
+          <Button variant="outline" size="sm" class="copy-page" data-copy-page={mdPath}>Copy page</Button>
           <div class="pager-arrows">
             {prev ? (
-              <a class="pg" href={prev.href} aria-label={`Previous: ${prev.title}`}>&larr;</a>
-            ) : <span class="pg off" aria-hidden="true">&larr;</span>}
+              <Button href={prev.href} variant="outline" size="icon-sm" class="pg" aria-label={`Previous: ${prev.title}`}>&larr;</Button>
+            ) : <Button variant="outline" size="icon-sm" class="pg" disabled aria-hidden="true">&larr;</Button>}
             {next ? (
-              <a class="pg" href={next.href} aria-label={`Next: ${next.title}`}>&rarr;</a>
-            ) : <span class="pg off" aria-hidden="true">&rarr;</span>}
+              <Button href={next.href} variant="outline" size="icon-sm" class="pg" aria-label={`Next: ${next.title}`}>&rarr;</Button>
+            ) : <Button variant="outline" size="icon-sm" class="pg" disabled aria-hidden="true">&rarr;</Button>}
           </div>
         </div>
       </div>
@@ -99,15 +104,19 @@ const mdPath = md ?? `${href === "/docs" ? "/docs" : href}.md`;
 
       <nav class="pager" aria-label="Page">
         {prev ? (
-          <a class="pg-card" href={prev.href}>
-            <span class="pg-dir">&larr; Previous</span>
-            <span class="pg-title">{prev.title}</span>
+          <a class="pg-link" href={prev.href}>
+            <Card.Root class="pg-card">
+              <span class="pg-dir">&larr; Previous</span>
+              <span class="pg-title">{prev.title}</span>
+            </Card.Root>
           </a>
         ) : <span />}
         {next ? (
-          <a class="pg-card next" href={next.href}>
-            <span class="pg-dir">Next &rarr;</span>
-            <span class="pg-title">{next.title}</span>
+          <a class="pg-link" href={next.href}>
+            <Card.Root class="pg-card next">
+              <span class="pg-dir">Next &rarr;</span>
+              <span class="pg-title">{next.title}</span>
+            </Card.Root>
           </a>
         ) : <span />}
       </nav>
@@ -157,18 +166,15 @@ const mdPath = md ?? `${href === "/docs" ? "/docs" : href}.md`;
       addEventListener("scroll", mark, { passive: true });
       mark();
     }
+    // Pause Lenis while the docs drawer is open.
     const lenisApi = () =>
       (window as { __lenis?: { stop(): void; start(): void } }).__lenis;
-    document.querySelector("[data-open-drawer]")?.addEventListener("click", () => {
-      document.getElementById("docs-drawer")?.removeAttribute("hidden");
-      lenisApi()?.stop();
+    document.getElementById("docs-drawer")?.addEventListener("starwind:open-change", (e) => {
+      if (!(e instanceof CustomEvent)) return;
+      const open = (e.detail as { open?: boolean }).open;
+      if (open) lenisApi()?.stop();
+      else lenisApi()?.start();
     });
-    document.querySelectorAll("[data-close-drawer], .drawer-panel a").forEach((b) =>
-      b.addEventListener("click", () => {
-        document.getElementById("docs-drawer")?.setAttribute("hidden", "");
-        lenisApi()?.start();
-      }),
-    );
   </script>
 </Base>
 
@@ -279,44 +285,19 @@ const mdPath = md ?? `${href === "/docs" ? "/docs" : href}.md`;
     padding-top: 6px;
   }
   .copy-page {
-    display: inline-flex;
-    align-items: center;
     height: 30px;
     padding: 0 12px;
-    border: 1px solid var(--line);
-    border-radius: 8px;
-    background: transparent;
-    color: var(--muted);
-    font-family: inherit;
     font-size: 13px;
-    cursor: pointer;
-    transition: color var(--t-hover) ease, border-color var(--t-hover) ease;
-  }
-  .copy-page:hover {
-    color: var(--ink);
-    border-color: #262a31;
+    font-weight: 400;
   }
   .pager-arrows {
     display: flex;
     gap: 4px;
   }
   .pg {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
     width: 30px;
     height: 30px;
-    border: 1px solid var(--line);
-    border-radius: 8px;
-    color: var(--muted);
-    text-decoration: none;
-  }
-  .pg:hover {
-    color: var(--ink);
-    border-color: #262a31;
-  }
-  .pg.off {
-    opacity: 0.35;
+    font-size: 14px;
   }
   .doc-body :global(h2) {
     font-size: 22px;
@@ -347,7 +328,8 @@ const mdPath = md ?? `${href === "/docs" ? "/docs" : href}.md`;
   .doc-body :global(li) {
     margin-bottom: 4px;
   }
-  .doc-body :global(code) {
+  /* Inline code only; framed code blocks (Expressive Code) own their styling. */
+  .doc-body :global(:not(pre) > code) {
     font-family: "Geist Mono", ui-monospace, monospace;
     font-size: 0.92em;
     color: var(--ink);
@@ -355,54 +337,20 @@ const mdPath = md ?? `${href === "/docs" ? "/docs" : href}.md`;
     padding: 1px 5px;
     border-radius: 4px;
   }
-  .doc-body :global(pre) {
-    background: #0b0c0e;
-    border: 1px solid var(--line);
-    border-radius: 10px;
-    padding: 14px 16px;
-    overflow-x: auto;
+  .doc-body :global(.expressive-code) {
     margin: 0 0 16px;
-    scrollbar-width: thin;
-    scrollbar-color: #2a2e35 transparent;
   }
-  .doc-body :global(pre::-webkit-scrollbar) {
-    width: 6px;
-    height: 6px;
+  .doc-body :global(td:first-child code),
+  .doc-body :global([data-slot="table-head"]) {
+    white-space: nowrap;
   }
-  .doc-body :global(pre::-webkit-scrollbar-thumb) {
-    background: #2a2e35;
-    border-radius: 3px;
-  }
-  .doc-body :global(pre::-webkit-scrollbar-track) {
-    background: transparent;
-  }
-  .doc-body :global(pre code) {
-    background: transparent;
-    padding: 0;
-    font-size: 13px;
-  }
-  .doc-body :global(table) {
-    width: 100%;
-    border-collapse: collapse;
+  .doc-body :global([data-slot="table"]) {
     font-size: 14px;
     margin: 0 0 20px;
   }
-  .doc-body :global(th),
-  .doc-body :global(td) {
-    text-align: left;
-    padding: 8px 10px;
-    border-bottom: 1px solid var(--line);
+  .doc-body :global([data-slot="table-cell"]) {
     color: var(--muted);
     vertical-align: top;
-  }
-  .doc-body :global(th) {
-    color: var(--ink);
-    font-weight: 500;
-    font-size: 13px;
-  }
-  .doc-body :global(td:first-child code),
-  .doc-body :global(th) {
-    white-space: nowrap;
   }
   .doc-body :global(a) {
     color: var(--ink);
@@ -421,23 +369,22 @@ const mdPath = md ?? `${href === "/docs" ? "/docs" : href}.md`;
     padding-top: 24px;
     border-top: 1px solid var(--line);
   }
+  .pg-link {
+    min-width: 180px;
+    text-decoration: none;
+  }
   .pg-card {
     display: flex;
     flex-direction: column;
     gap: 4px;
     padding: 14px 16px;
-    border: 1px solid var(--line);
-    border-radius: 12px;
-    min-width: 180px;
-    text-decoration: none;
     transition: border-color var(--t-hover) ease;
   }
-  .pg-card:hover {
+  .pg-link:hover .pg-card {
     border-color: #262a31;
   }
   .pg-card.next {
     text-align: right;
-    margin-left: auto;
   }
   .pg-dir {
     font-size: 12px;
@@ -504,28 +451,13 @@ const mdPath = md ?? `${href === "/docs" ? "/docs" : href}.md`;
   .drawer-btn {
     display: none;
   }
-  .drawer[hidden] {
-    display: none;
-  }
-  .doc-body :global(.table-wrap) {
-    overflow-x: auto;
-    margin-bottom: 20px;
-    scrollbar-width: thin;
-    scrollbar-color: #2a2e35 transparent;
-  }
-  .doc-body :global(.table-wrap::-webkit-scrollbar) {
-    height: 6px;
-  }
-  .doc-body :global(.table-wrap::-webkit-scrollbar-thumb) {
-    background: #2a2e35;
-    border-radius: 3px;
-  }
-  .doc-body :global(.table-wrap::-webkit-scrollbar-track) {
-    background: transparent;
-  }
-  .doc-body :global(.table-wrap table) {
-    min-width: 640px;
-    margin: 0;
+  .drawer-nav {
+    display: flex;
+    flex-direction: column;
+    padding: 20px 14px;
+    font-size: 14px;
+    overflow-y: auto;
+    height: 100%;
   }
   @media (max-width: 1150px) {
     .docs-wrap {
@@ -569,27 +501,10 @@ const mdPath = md ?? `${href === "/docs" ? "/docs" : href}.md`;
       flex: none;
       color: var(--muted);
     }
-    .drawer {
-      position: fixed;
-      inset: 0;
-      z-index: 100;
-    }
-    .drawer-back {
-      position: absolute;
-      inset: 0;
-      background: rgba(0, 0, 0, 0.6);
-    }
-    .drawer-panel {
-      position: absolute;
-      top: 0;
-      left: 0;
-      bottom: 0;
+    :global(.docs-drawer) {
       width: 260px;
-      background: var(--card);
+      padding: 0;
       border-right: 1px solid var(--line);
-      overflow-y: auto;
-      padding: 20px 14px;
-      font-size: 14px;
     }
   }
 </style>
