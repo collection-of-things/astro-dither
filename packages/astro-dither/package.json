@@ -4,8 +4,15 @@
   "description": "Animated dither backgrounds, gradients and image effects for Astro. No React.",
   "type": "module",
   "license": "MIT",
-  "keywords": ["astro-component", "withastro", "dither", "webgl", "shader", "aurora", "gradient"],
-  "author": "Screen",
+  "keywords": ["astro-component", "withastro", "dither", "webgl", "shader", "aurora", "gradient", "ui", "css", "image", "images", "a11y"],
+  "author": {
+    "name": "Screen",
+    "url": "https://www.npmjs.com/~screendev"
+  },
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org/"
+  },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/screen-gd/astro-dither.git",
@@ -38,6 +45,7 @@
     "!src/**/*.test.ts",
     "README.md",
     "LICENSE",
+    "THIRD_PARTY_NOTICES.md",
     "CHANGELOG.md"
   ],
   "engines": {

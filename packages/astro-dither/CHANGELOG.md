@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 0.1.0 - 2026-11-04
 
 - `DitherAurora` takes `color`, `tipColor` and `background` (hex) and builds its palette from them, and accepts `direction="up" | "down"` and `mask="none" | "top" | "bottom" | "edges"`. Its default `spread` is now 0.11.
 - New `levels` (snap tones before dithering) and `stillTime` settings on every ordered effect. `auroraPalette` is exported.
@@ -10,9 +10,7 @@
 - `DitherGlobe` spins by default, keeps a round shape in any box and is lit, with a dithered sea. New `sea` and `speed` props; `speed={0}` holds it still. The land mask is now a 2048×1024 equirectangular map built from Natural Earth by `scripts/land-mask.mjs`, which fixes the upside-down, stretched continents. The mask is exported as `astro-dither/assets/land.png`.
 - Every dither element dispatches a bubbling `dither:ready` CustomEvent after it draws its first frame.
 
-## 0.1.0
-
-First public release.
+### Initial package
 
 - Six components: `Dither`, `DitherImage`, `DitherGradient`, `DitherAurora`, `DitherGlobe`, `DitherEffect`.
 - Nineteen effects in one registry: gradient, glow, mesh, beams, noise, plasma, waves, silk, smoke, contours, ripples, metaballs, tunnel, retro-grid, aurora, starfield, eclipse, globe, rise.

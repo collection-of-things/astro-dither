@@ -13,7 +13,7 @@ const COMPONENTS = {
   aurora: { file: "components/DitherAurora.astro", description: "The aurora effect with all its knobs" },
   image: { file: "components/DitherImage.astro", description: "Ordered dithering over any image" },
   gradient: { file: "components/DitherGradient.astro", description: "Linear, radial, conic or wave gradients" },
-  effect: { file: "components/DitherEffect.astro", description: "Any of the 18 dithered effects" },
+  effect: { file: "components/DitherEffect.astro", description: "Any of the 19 dithered effects" },
   globe: { file: "components/DitherGlobe.astro", description: "An orthographic globe dithered from a land mask" },
   dither: { file: "components/Dither.astro", description: "Paper's animated dither shapes" },
 };
