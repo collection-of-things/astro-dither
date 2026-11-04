@@ -504,7 +504,7 @@ export const SHARED_PROP_ROWS: PropRow[] = [
   { name: "speed", type: "number", def: "1", desc: "Playback speed. 0 draws one still frame." },
   { name: "stillTime", type: "number", def: "the effect's", desc: "The moment drawn when motion is off or reduced, in seconds." },
   { name: "levels", type: "number", def: "0 (all)", desc: "Tones the field snaps to before dithering. Low values give hard, posterised steps." },
-  { name: "bloom", type: "number", def: "0", desc: "Bloom around lit cells, 0 to 1. CSS `--dither-bloom` overrides it, so hover states can raise it." },
+  { name: "bloom", type: "number", def: "0", desc: "Bloom around lit cells, 0 to 1. Set a positive prop to create the overlay before overriding it with CSS `--dither-bloom`." },
   { name: "bloomRadius", type: "number", def: "10", desc: "Bloom blur in CSS pixels. CSS `--dither-bloom-radius` overrides it." },
   { name: "class", type: "string", def: "undefined", desc: "Classes on the surface element, for size and position." },
 ];
