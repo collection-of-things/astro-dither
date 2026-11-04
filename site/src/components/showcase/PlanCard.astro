@@ -1,0 +1,88 @@
+---
+import { DitherEffect } from "astro-dither";
+import Card from "../starwind/card";
+import DitherButton from "./DitherButton.astro";
+
+/** Showcase card: a pricing plan with a dithered mesh header and a dithered call to action. */
+const FEATURES = ["Unlimited projects", "Custom domains", "Priority support"];
+---
+
+<Card.Root class="plan" role="article">
+  <div class="plan-head" aria-hidden="true">
+    <DitherEffect effect="mesh" palette={["#000000", "#061a33", "#0b4f99", "#1f8fff", "#d6efff"]} cell={3} speed={0.6} bloom={0.6} bloomRadius={12} />
+  </div>
+  <Card.Content class="plan-body">
+    <h3>Pro</h3>
+    <p class="plan-price"><span>$12</span> / month</p>
+    <ul>
+      {FEATURES.map((f) => <li>{f}</li>)}
+    </ul>
+    <DitherButton class="plan-cta">Upgrade to Pro</DitherButton>
+  </Card.Content>
+</Card.Root>
+
+<style>
+  .plan {
+    height: 100%;
+    padding: 0;
+    gap: 0;
+    border-radius: 16px;
+    overflow: hidden;
+  }
+  .plan-head {
+    position: relative;
+    height: 120px;
+  }
+  .plan-head :global(dither-surface) {
+    position: absolute;
+    inset: 0;
+  }
+  .plan:hover .plan-head :global(dither-surface) {
+    --dither-bloom: 1;
+  }
+  .plan-body {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    padding: 20px;
+  }
+  h3 {
+    font-size: 15px;
+    font-weight: 500;
+    color: var(--ink);
+  }
+  .plan-price {
+    margin-top: 6px;
+    font-size: 13px;
+    color: var(--muted);
+  }
+  .plan-price span {
+    font-size: 30px;
+    font-weight: 500;
+    letter-spacing: -0.02em;
+    color: var(--ink);
+  }
+  ul {
+    margin: 16px 0 20px;
+    padding: 0;
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    font-size: 13px;
+    color: var(--muted);
+  }
+  li::before {
+    content: "";
+    display: inline-block;
+    width: 6px;
+    height: 6px;
+    margin-right: 10px;
+    vertical-align: middle;
+    background: var(--accent);
+  }
+  .plan-body :global(.plan-cta) {
+    margin-top: auto;
+    width: 100%;
+  }
+</style>

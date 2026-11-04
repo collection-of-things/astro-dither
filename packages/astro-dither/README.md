@@ -133,7 +133,7 @@ The loop pauses when the element is off screen, when the tab is hidden, and when
 | `retro-grid` | none | Perspective grid floor and striped sun |
 | `starfield` | `gain` (1.2) | Three parallax twinkling layers |
 | `eclipse` | `radius` (0.22) | Dark disc, glowing rim, breathing corona |
-| `globe` | `lat` (20), `lon` (48) | Orthographic globe from a land mask, static |
+| `globe` | `lat` (20), `lon` (48), `sea` (0.12) | Spinning, lit globe from a land mask |
 
 ### Add your own effect
 
@@ -141,7 +141,7 @@ Add an entry to `effects` in `src/lib/effects.ts`: a `field` function in GLSL th
 
 ## Wrappers
 
-`DitherGradient` (`mode`, `angle`, `centerX`, `centerY`, `radius`, `from`, `to`, `speed`, `cell`, `matrix`, `palette`), `DitherAurora` (all of the aurora params above, plus `speed`, `cell`, `matrix`, `palette`), and `DitherGlobe` (`src`, `lat`, `lon`, `cell`, `matrix`, `palette`) are thin wrappers over `DitherEffect` with the gradient, aurora, and globe effects.
+`DitherGradient` (`mode`, `angle`, `centerX`, `centerY`, `radius`, `from`, `to`, `speed`, `cell`, `matrix`, `palette`), `DitherAurora` (all of the aurora params above, plus `speed`, `cell`, `matrix`, `palette`), and `DitherGlobe` (`src`, `lat`, `lon`, `sea`, `speed`, `cell`, `matrix`, `palette`) are thin wrappers over `DitherEffect` with the gradient, aurora, and globe effects.
 
 Every component fills its parent. The shader loops pause when the element is off screen, when the tab is hidden, and when the user prefers reduced motion. WebGL2 is required. If the browser cannot create a context, the element falls back to its colours.
 

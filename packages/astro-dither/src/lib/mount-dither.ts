@@ -31,6 +31,12 @@ class DitherCanvas extends HTMLElement {
         settings.minPixelRatio,
         settings.maxPixelCount,
       );
+      // The mount draws on its first rAF, queued before this one.
+      requestAnimationFrame(() => {
+        if (!this.isConnected) return;
+        this.setAttribute("data-dither-ready", "");
+        this.dispatchEvent(new CustomEvent("dither:ready", { bubbles: true }));
+      });
     } catch {
       this.replaceChildren();
       this.style.background = settings.colorBack;

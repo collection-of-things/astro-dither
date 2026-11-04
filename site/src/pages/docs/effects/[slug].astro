@@ -1,15 +1,15 @@
 ---
 import DocsLayout from "../../../layouts/DocsLayout.astro";
 import DocsDemo from "../../../components/docs/DocsDemo.astro";
-import Snippet from "../../../components/ui/Snippet.astro";
-import CopyButton from "../../../components/ui/CopyButton.astro";
-import { Code } from "astro:components";
+import InstallSnippet from "../../../components/ui/InstallSnippet.astro";
+import Table from "../../../components/starwind/table";
+import { Code } from "astro-expressive-code/components";
 import { DitherEffect, DitherGlobe } from "astro-dither";
 import { effects } from "astro-dither/effects";
 import type { EffectDefinition } from "astro-dither/effects";
 import { EFFECTS, effectParamRows, SHARED_PROP_ROWS } from "../../../docs/registry";
 import { inline, usageImport } from "../../../docs/format";
-import type { ControlSpec } from "../../../docs/components";
+import { effectControls } from "../../../docs/components";
 
 export function getStaticPaths() {
   return EFFECTS.map((doc) => ({ params: { slug: doc.slug }, props: { doc } }));
@@ -28,12 +28,7 @@ const seed: Record<string, unknown> = {
   speed: def.speed,
 };
 
-const paramControls: ControlSpec[] = Object.entries(def.params).map(([key, value]) => {
-  const r = def.ranges?.[key];
-  return r
-    ? { kind: "slider", key, label: key, min: r.min, max: r.max, step: r.step, param: true }
-    : { kind: "slider", key, label: key, min: 0, max: value <= 1 ? 1 : value * 2, step: value <= 1 ? 0.01 : 0.1, param: true };
-});
+const paramControls = effectControls(doc.slug);
 
 const exampleSeed = (ex: (typeof doc.examples)[number]) => {
   const s: Record<string, unknown> = { ...seed, params: { ...def.params, ...ex.params } };
@@ -68,26 +63,23 @@ const propRows = [...effectParamRows(doc.slug), ...SHARED_PROP_ROWS];
     cell
     speed
     animate
+    extras
   >
     {doc.slug === "globe" ? <DitherGlobe /> : <DitherEffect effect={doc.slug} />}
   </DocsDemo>
 
   <h2 id="installation">Installation</h2>
-  <Snippet
-    tabs={[
-      { label: "pnpm", code: "pnpm add astro-dither" },
-      { label: "npm", code: "npm i astro-dither" },
-      { label: "bun", code: "bun add astro-dither" },
-    ]}
-    defaultTab="pnpm"
-  />
-  <p class="alt-install">
-    Or copy the source into your project: <code>npx astro-dither add effect</code>
-    <CopyButton value="npx astro-dither add effect" size="sm" label="Copy source command" />
-  </p>
+  <InstallSnippet />
+  <p class="alt-install">Or copy the source into your project:</p>
+  <Code code="npx astro-dither add effect" lang="bash" frame="terminal" />
 
   <h2 id="usage">Usage</h2>
-  <Code code={`---\nimport { ${usageImport(doc.usage)} } from "astro-dither";\n---\n\n${doc.usage}`} lang="astro" theme="github-dark-dimmed" />
+  <Code
+    code={`---\nimport { ${usageImport(doc.usage)} } from "astro-dither";\n---\n\n${doc.usage}`}
+    lang="astro"
+    frame="code"
+    title="src/pages/index.astro"
+  />
   <p set:html={inline(doc.intro)}></p>
   <p>The props group like this:</p>
   <p set:html={inline(doc.propGroups)}></p>
@@ -110,23 +102,26 @@ const propRows = [...effectParamRows(doc.slug), ...SHARED_PROP_ROWS];
   }
 
   <h2 id="props">Props</h2>
-  <div class="table-wrap">
-    <table>
-      <thead>
-        <tr><th>Prop</th><th>Type</th><th>Default</th><th>Description</th></tr>
-      </thead>
-      <tbody>
-        {propRows.map((r) => (
-          <tr>
-            <td><code>{r.name}</code></td>
-            <td><code>{r.type}</code></td>
-            <td>{r.def}</td>
-            <td set:html={inline(r.desc)}></td>
-          </tr>
-        ))}
-      </tbody>
-    </table>
-  </div>
+  <Table.Root>
+    <Table.Header>
+      <Table.Row>
+        <Table.Head>Prop</Table.Head>
+        <Table.Head>Type</Table.Head>
+        <Table.Head>Default</Table.Head>
+        <Table.Head>Description</Table.Head>
+      </Table.Row>
+    </Table.Header>
+    <Table.Body>
+      {propRows.map((r) => (
+        <Table.Row>
+          <Table.Cell><code>{r.name}</code></Table.Cell>
+          <Table.Cell><code>{r.type}</code></Table.Cell>
+          <Table.Cell>{r.def}</Table.Cell>
+          <Table.Cell set:html={inline(r.desc)} />
+        </Table.Row>
+      ))}
+    </Table.Body>
+  </Table.Root>
 
   <h2 id="notes">Notes</h2>
   <ul>
@@ -139,17 +134,8 @@ const propRows = [...effectParamRows(doc.slug), ...SHARED_PROP_ROWS];
 
 <style>
   .alt-install {
-    margin-top: 12px;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    flex-wrap: wrap;
+    margin: 0 0 10px;
     font-size: 14px;
     color: var(--muted);
-  }
-  .alt-install code {
-    font-family: "Geist Mono", ui-monospace, monospace;
-    font-size: 13px;
-    color: var(--ink);
   }
 </style>

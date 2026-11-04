@@ -1,23 +1,54 @@
 ---
-import { orderedDitherAttribute } from "../lib/ordered-dither";
+import { auroraPalette, orderedDitherAttribute } from "../lib/ordered-dither";
 import type { EffectParams } from "../lib/effects";
 
-interface Props extends EffectParams<"aurora"> {
+const MASKS = { none: 0, top: 1, bottom: 2, edges: 3 } as const;
+const DEFAULT_PALETTE = ["#02060d", "#061a33", "#0b4f99", "#1f8fff", "#d6efff"];
+
+interface Props extends Omit<EffectParams<"aurora">, "direction" | "mask"> {
   class?: string;
+  /** The bright lower edge of each curtain. Hex. */
+  color?: string;
+  /** The faint tops of the rays. Defaults to `color`; set it for a two-tone sky. Hex. */
+  tipColor?: string;
+  /** The sky behind. Hex, or `transparent` to show the page. */
+  background?: string;
+  /** 2 to 8 colours, dark sky first and brightest sparkle last. Takes over from the colour props. */
+  palette?: string[];
+  /** `up` puts the bright edge at the bottom; `down` hangs the rays from a bright top edge. */
+  direction?: "up" | "down" | 1 | -1;
+  /** Fades the aurora out where your text sits. */
+  mask?: keyof typeof MASKS | 0 | 1 | 2 | 3;
   /** Animation speed. 0 draws one still frame. */
   speed?: number;
+  /** The moment drawn when motion is off or reduced, in seconds. */
+  stillTime?: number;
+  /** Size of one dither cell in CSS pixels. */
   cell?: number;
   matrix?: 2 | 4 | 8 | "noise";
-  /** 2 to 8 colours, dark sky first and brightest sparkle last. */
-  palette?: string[];
+  /** Tones the field snaps to before dithering. Low values give hard steps. */
+  levels?: number;
+  /** Bloom around lit cells, 0 to 1. 0 adds none. CSS `--dither-bloom` overrides it, for hover states. */
+  bloom?: number;
+  /** Bloom blur in CSS pixels. CSS `--dither-bloom-radius` overrides it. */
+  bloomRadius?: number;
 }
 
 const {
   class: className,
+  color,
+  tipColor,
+  background,
+  palette,
+  direction,
+  mask,
   speed = 1,
+  stillTime,
   cell = 2,
   matrix = 8,
-  palette = ["#02060d", "#061a33", "#0b4f99", "#1f8fff", "#d6efff"],
+  levels,
+  bloom,
+  bloomRadius,
   curtains,
   height,
   spread,
@@ -31,9 +62,16 @@ const {
   scale,
   tilt,
   drift,
-  direction,
-  mask,
 } = Astro.props;
+
+// An explicit palette wins; otherwise any colour prop builds one; otherwise the night-blue default.
+const edge = color ?? "#1f8fff";
+const resolvedPalette =
+  palette ??
+  (color !== undefined || tipColor !== undefined || background !== undefined
+    ? auroraPalette(background ?? "#02060d", tipColor ?? edge, edge)
+    : DEFAULT_PALETTE);
+
 const encoded = orderedDitherAttribute({
   effect: "aurora",
   params: {
@@ -50,13 +88,17 @@ const encoded = orderedDitherAttribute({
     scale,
     tilt,
     drift,
-    direction,
-    mask,
+    direction: direction === "down" ? -1 : direction === "up" ? 1 : direction,
+    mask: typeof mask === "string" ? MASKS[mask] : mask,
   },
   speed,
+  stillTime,
   cell,
   matrix,
-  palette,
+  levels,
+  bloom,
+  bloomRadius,
+  palette: resolvedPalette,
 });
 ---
 
@@ -74,11 +116,5 @@ const encoded = orderedDitherAttribute({
     width: 100%;
     height: 100%;
     pointer-events: none;
-  }
-
-  dither-surface :global(canvas) {
-    display: block;
-    width: 100%;
-    height: 100%;
   }
 </style>

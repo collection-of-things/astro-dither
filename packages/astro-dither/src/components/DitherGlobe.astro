@@ -7,6 +7,18 @@ interface Props {
   src?: string;
   lat?: number;
   lon?: number;
+  /** Tone of the sea, 0 to 1. 0 leaves it clear so only land shows. */
+  sea?: number;
+  /** Spin speed. 0 holds the globe still. */
+  speed?: number;
+  /** Tones the field snaps to before dithering. Low values give hard steps. */
+  levels?: number;
+  /** The moment drawn when motion is off or reduced, in seconds. */
+  stillTime?: number;
+  /** Bloom around lit cells, 0 to 1. 0 adds none. CSS `--dither-bloom` overrides it, for hover states. */
+  bloom?: number;
+  /** Bloom blur in CSS pixels. CSS `--dither-bloom-radius` overrides it. */
+  bloomRadius?: number;
   cell?: number;
   matrix?: 2 | 4 | 8 | "noise";
   palette?: string[];
@@ -17,12 +29,18 @@ const {
   src = land.src,
   lat = 20,
   lon = 48,
+  sea = 0.12,
+  speed = 1,
+  levels,
+  stillTime,
+  bloom,
+  bloomRadius,
   cell = 2.5,
   matrix = 4,
   palette = ["transparent", "#f4f1ea"],
 } = Astro.props;
 
-const encoded = orderedDitherAttribute({ effect: "globe", params: { lat, lon }, src, cell, matrix, palette });
+const encoded = orderedDitherAttribute({ effect: "globe", params: { lat, lon, sea }, src, speed, levels, stillTime, bloom, bloomRadius, cell, matrix, palette });
 ---
 
 <dither-surface class={className} data-dither={encoded} aria-hidden="true"></dither-surface>

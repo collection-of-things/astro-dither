@@ -1,0 +1,294 @@
+---
+import type { ControlSpec } from "../../docs/components";
+import { PALETTE_PRESETS } from "../../docs/registry";
+import { Slider } from "../starwind/slider";
+import { Switch } from "../starwind/switch";
+import { ToggleGroup, ToggleGroupItem } from "../starwind/toggle-group";
+import Select from "../starwind/select";
+
+interface Props {
+  controls: ControlSpec[];
+  seed: Record<string, unknown>;
+  /** Unique per-demo id fragment for switch ids. */
+  uid: string;
+  /** Show the palette preset row at the end of this grid. */
+  palettes?: boolean;
+}
+
+const { controls, seed, uid, palettes = false } = Astro.props;
+
+const SLIDER_DEFAULTS: Record<string, number> = { cell: 2, speed: 1, levels: 0, stillTime: 0, bloom: 0, bloomRadius: 10 };
+
+/** The seed value a control starts from: params for effect knobs, top-level keys otherwise. */
+const seedValue = (c: ControlSpec): unknown => {
+  if (c.kind === "toggle" && c.key === "animate") return typeof seed.speed === "number" ? seed.speed > 0 : true;
+  if ("param" in c && c.param) return (seed.params as Record<string, unknown> | undefined)?.[c.key];
+  return seed[c.key];
+};
+const sliderValue = (c: Extract<ControlSpec, { kind: "slider" }>): number => {
+  const v = seedValue(c);
+  return typeof v === "number" ? v : (SLIDER_DEFAULTS[c.key] ?? c.min);
+};
+---
+
+<div class="ctl-grid">
+  {
+    controls.map((c) =>
+      c.kind === "slider" ? (
+        <div class="ctl">
+          <span class="ctl-name">
+            {c.label}
+            <output class="ctl-val" data-out={c.key} data-unit={c.unit ?? ""}>
+              {`${sliderValue(c)}${c.unit ?? ""}`}
+            </output>
+          </span>
+          <Slider
+            variant="primary"
+            min={c.min}
+            max={c.max}
+            step={c.step}
+            defaultValue={sliderValue(c)}
+            data-key={c.key}
+            data-param={"param" in c && c.param ? "1" : undefined}
+          />
+        </div>
+      ) : c.kind === "select" ? (
+        c.options.length > 4 ? (
+          <div class="ctl">
+            <span class="ctl-name">{c.label}</span>
+            <Select.Root
+              defaultValue={seedValue(c) === undefined ? undefined : String(seedValue(c))}
+              data-key={c.key}
+              data-param={c.param ? "1" : undefined}
+            >
+              <Select.Trigger size="sm" class="sel" aria-label={c.label} />
+              <Select.Content size="sm">
+                {c.options.map((o) => (
+                  <Select.Item value={o.value}>{o.label}</Select.Item>
+                ))}
+              </Select.Content>
+            </Select.Root>
+          </div>
+        ) : (
+          <div class="ctl">
+            <span class="ctl-name">{c.label}</span>
+            <ToggleGroup
+              spacing={0}
+              size="sm"
+              class="seg"
+              defaultValue={seedValue(c) === undefined ? undefined : [String(seedValue(c))]}
+              aria-label={c.label}
+              data-key={c.key}
+              data-param={c.param ? "1" : undefined}
+            >
+              {c.options.map((o) => (
+                <ToggleGroupItem value={o.value} class="seg-btn">
+                  {o.label}
+                </ToggleGroupItem>
+              ))}
+            </ToggleGroup>
+          </div>
+        )
+      ) : c.kind === "swatch" ? (
+        <div class="ctl">
+          <span class="ctl-name">{c.label}</span>
+          <ToggleGroup spacing={2} class="swatches" aria-label={c.label} data-swatches data-key={c.key}>
+            {c.options.map((color) => {
+              const on = String(seedValue(c) ?? c.value) === color;
+              return (
+                <ToggleGroupItem
+                  value={color}
+                  class:list={["sw", { clear: color === "transparent" }]}
+                  style={color === "transparent" ? undefined : `--sw:${color}`}
+                  aria-label={`${c.label} ${color}`}
+                  defaultPressed={on}
+                  data-on={on ? "" : undefined}
+                />
+              );
+            })}
+          </ToggleGroup>
+        </div>
+      ) : c.kind === "triplet" ? (
+        <div class="ctl">
+          <span class="ctl-name">{c.label}</span>
+          <ToggleGroup spacing={2} class="swatches" aria-label={c.label} data-triplet="1">
+            {c.options.map((o) => (
+              <ToggleGroupItem
+                value={o.value}
+                class="sw wide"
+                style={`--sw:linear-gradient(135deg,${o.value})`}
+                aria-label={o.label}
+              />
+            ))}
+          </ToggleGroup>
+        </div>
+      ) : (
+        <div class="ctl tgl">
+          <span class="ctl-name">{c.label}</span>
+          <Switch
+            id={`sw-${uid}-${c.key}`}
+            size="sm"
+            variant="primary"
+            class="bg-input border-0 aria-checked:bg-primary"
+            defaultChecked={Boolean(seedValue(c))}
+            aria-label={c.label}
+            data-key={c.key}
+            data-param={"param" in c && c.param ? "1" : undefined}
+          />
+        </div>
+      ),
+    )
+  }
+  {
+    palettes && (
+      <div class="ctl wide">
+        <span class="ctl-name">Palette</span>
+        <ToggleGroup spacing={2} class="swatches" aria-label="Palette presets" data-pals>
+          {PALETTE_PRESETS.map((p) => (
+            <ToggleGroupItem
+              value={JSON.stringify(p.colors)}
+              class="sw wide"
+              style={`--sw:linear-gradient(135deg,${p.colors.join(",")})`}
+              title={p.name}
+              aria-label={`Palette ${p.name}`}
+            />
+          ))}
+        </ToggleGroup>
+      </div>
+    )
+  }
+</div>
+
+<style>
+  .ctl-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px 32px;
+  }
+  .ctl {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    min-width: 0;
+  }
+  .ctl.wide {
+    grid-column: 1 / -1;
+  }
+  .ctl-name {
+    display: flex;
+    justify-content: space-between;
+    gap: 8px;
+    font-family: "Geist Mono", ui-monospace, monospace;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: var(--muted);
+  }
+  .ctl-val {
+    color: var(--ink);
+    letter-spacing: 0;
+    text-transform: none;
+    font-variant-numeric: tabular-nums;
+  }
+  .tgl {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    align-self: end;
+  }
+
+  /* Segmented choice: a dark pill track, the chosen option raised. */
+  .seg {
+    display: flex;
+    width: 100%;
+    gap: 2px;
+    padding: 3px;
+    border-radius: 999px;
+    background: #1b1d21;
+  }
+  .seg-btn {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    border: 0;
+    background: transparent;
+    color: var(--muted);
+    font-family: "Geist Mono", ui-monospace, monospace;
+    font-size: 12px;
+    padding: 6px 8px;
+    border-radius: 999px;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: color var(--t-hover) ease, background var(--t-hover) ease;
+  }
+  .seg-btn:hover {
+    color: var(--ink);
+  }
+  .seg-btn[data-state="on"] {
+    background: #2e3137;
+    color: var(--ink);
+  }
+
+  /* Dropdown trigger for longer choice lists: same pill family, mono. */
+  .sel {
+    width: 100%;
+    height: 32px;
+    padding: 0 12px;
+    border: 0;
+    border-radius: 999px;
+    background: #1b1d21;
+    color: var(--ink);
+    font-family: "Geist Mono", ui-monospace, monospace;
+    font-size: 12px;
+    cursor: pointer;
+  }
+  .sel:hover {
+    background: #2e3137;
+  }
+
+  /* Colour dots: round swatches; wider chips show a preset's whole ramp. */
+  .swatches {
+    display: flex;
+    flex-wrap: wrap;
+    width: fit-content;
+    gap: 8px;
+  }
+  .sw {
+    flex: none;
+    width: 22px;
+    min-width: 22px;
+    height: 22px;
+    min-height: 22px;
+    padding: 0;
+    border: 0;
+    border-radius: 50%;
+    background: var(--sw);
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.14);
+    cursor: pointer;
+    transition: transform var(--t-hover) ease;
+  }
+  .sw.wide {
+    width: 40px;
+    min-width: 40px;
+    border-radius: 999px;
+  }
+  .sw.clear {
+    background: repeating-conic-gradient(#3a3d44 0 25%, #1b1d21 0 50%) 50% / 8px 8px;
+  }
+  .sw:hover {
+    transform: scale(1.1);
+  }
+  .sw[data-on] {
+    box-shadow:
+      inset 0 0 0 1px rgba(255, 255, 255, 0.14),
+      0 0 0 2px var(--card),
+      0 0 0 4px var(--ink);
+  }
+
+  @media (max-width: 640px) {
+    .ctl-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>

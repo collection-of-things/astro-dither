@@ -15,6 +15,14 @@ export interface OrderedDitherSettings {
   cell: number;
   matrix: DitherMatrix;
   speed: number;
+  /** Tones the field snaps to before dithering. 0 keeps every tone; low values give hard steps. */
+  levels: number;
+  /** The moment drawn when motion is off or reduced, in seconds. */
+  stillTime: number;
+  /** Bloom strength, 0 to 1. 0 adds no bloom layer. CSS `--dither-bloom` overrides it. */
+  bloom: number;
+  /** Bloom blur in CSS pixels. CSS `--dither-bloom-radius` overrides it. */
+  bloomRadius: number;
   /** Image source, used by effects that sample `u_image`. */
   src: string;
 }
@@ -50,6 +58,26 @@ export function globePoint(lat: number, lon: number, centerLat: number, centerLo
   return { x: (x + 1) / 2, y: (1 - y) / 2, visible: facing > 0.02 };
 }
 
+/**
+ * Build an aurora palette from three colours: the sky, the faint ray tips and the bright edge.
+ * Dark to bright, as the engine expects. Hex colours only, since the mixing happens at build time.
+ */
+export function auroraPalette(background: string, tipColor: string, color: string): string[] {
+  return [background, mixHex(background, tipColor, 0.45), tipColor, color, mixHex(color, "#ffffff", 0.6)];
+}
+
+/** Mix two hex colours, `t` 0 gives `a` and 1 gives `b`. Non-hex input comes back unchanged as `a`. */
+export function mixHex(a: string, b: string, t: number): string {
+  const ca = parseCssColor(a);
+  const cb = parseCssColor(b);
+  if (ca === undefined || cb === undefined) return a;
+  const hex = (i: 0 | 1 | 2) =>
+    Math.round((ca[i] + (cb[i] - ca[i]) * t) * 255)
+      .toString(16)
+      .padStart(2, "0");
+  return `#${hex(0)}${hex(1)}${hex(2)}`;
+}
+
 /** Encode props for the custom element. Keys are passed through as given. */
 export function orderedDitherAttribute(props: Record<string, unknown>): string {
   return JSON.stringify(props);
@@ -68,6 +96,10 @@ export function parseOrderedDither(input: unknown): OrderedDitherSettings {
     cell: Math.max(1, readNumber(record, "cell", 2)),
     matrix: readMatrix(record),
     speed: readSpeed(record, def.speed),
+    levels: Math.max(0, Math.round(readNumber(record, "levels", 0))),
+    stillTime: readNumber(record, "stillTime", def.stillTime),
+    bloom: Math.max(0, readNumber(record, "bloom", 0)),
+    bloomRadius: Math.max(0, readNumber(record, "bloomRadius", 10)),
     src: readString(record, "src", ""),
   };
 }

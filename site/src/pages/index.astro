@@ -1,11 +1,18 @@
 ---
 import Base from "../layouts/Base.astro";
 import { DitherAurora, DitherEffect, DitherImage } from "astro-dither";
-import Button from "../components/ui/Button.astro";
+import { Code } from "astro-expressive-code/components";
 import Logo from "../components/Logo.astro";
 import CopyButton from "../components/ui/CopyButton.astro";
-import Snippet from "../components/ui/Snippet.astro";
-import { Code } from "astro:components";
+import InstallSnippet from "../components/ui/InstallSnippet.astro";
+import { Badge } from "../components/starwind/badge";
+import { Button } from "../components/starwind/button";
+import Card from "../components/starwind/card";
+import { InputGroup, InputGroupAddon, InputGroupInput } from "../components/starwind/input-group";
+import { ToggleGroup, ToggleGroupItem } from "../components/starwind/toggle-group";
+import GlobeCard from "../components/showcase/GlobeCard.astro";
+import PlayerCard from "../components/showcase/PlayerCard.astro";
+import PlanCard from "../components/showcase/PlanCard.astro";
 import { REPO_URL, PAPER_URL } from "../site.ts";
 
 const INSTALL = {
@@ -13,12 +20,6 @@ const INSTALL = {
   npm: "npm i astro-dither",
   bun: "bun add astro-dither",
 };
-
-const INSTALL_TABS = [
-  { label: "npm", code: "npm i astro-dither" },
-  { label: "pnpm", code: "pnpm add astro-dither" },
-  { label: "bun", code: "bun add astro-dither" },
-];
 
 interface UsageItem {
   label: string;
@@ -96,25 +97,44 @@ const FOOTER_RISE = {
 };
 ---
 
-<Base title="astro-dither: Dither for Astro, based on Leo's dithercn">
+<Base title="astro-dither: Dither for Astro">
   <header class="hero">
     <div class="hero-sky" aria-hidden="true"><DitherEffect effect="starfield" params={{ gain: 0.7 }} /></div>
-    <div class="hero-aurora" aria-hidden="true"><DitherAurora /></div>
+    <div class="hero-aurora" aria-hidden="true">
+      <DitherAurora
+        color="#3d8bff"
+        tipColor="#6a4cff"
+        background="transparent"
+        height={0.66}
+        curtains={3}
+        spread={0.08}
+        rays={9}
+        length={0.5}
+        sway={1.1}
+        glow={1}
+        intensity={0.7}
+        cell={3}
+        bloom={0.55}
+        bloomRadius={14}
+      />
+    </div>
     <div class="hero-inner">
-      <h1 class="lines" aria-label="Dither for Astro, based on Leo's dithercn">
-        <span class="line"><span data-line style="--i:0">Dither for Astro,</span></span>
-        <span class="line"><span data-line style="--i:1">based on Leo&rsquo;s <a class="h1-link" href="https://dithercn.vercel.app">dithercn</a></span></span>
+      <h1 class="lines" aria-label="Animated dither for Astro">
+        <span class="line"><span data-line style="--i:0">Animated dither</span></span>
+        <span class="line"><span data-line style="--i:1">for Astro</span></span>
       </h1>
       <p class="sub" data-fade style="--d:350ms">
-        Animated dither backgrounds, gradients and image effects.<br />
+        Backgrounds, gradients and image effects.<br />
         Plain Astro components. No React.
       </p>
       <div class="hero-actions" data-fade style="--d:500ms">
         <Button variant="primary" href="/docs/installation">Get started</Button>
-        <span class="cmd-pill">
-          <code>{INSTALL.pnpm}</code>
-          <CopyButton value={INSTALL.pnpm} size="sm" label="Copy install command" />
-        </span>
+        <InputGroup class="cmd-pill">
+          <InputGroupInput readonly value={INSTALL.pnpm} aria-label="Install command" tabindex={-1} />
+          <InputGroupAddon align="inline-end">
+            <CopyButton value={INSTALL.pnpm} label="Copy install command" />
+          </InputGroupAddon>
+        </InputGroup>
       </div>
     </div>
   </header>
@@ -128,37 +148,36 @@ const FOOTER_RISE = {
           <p>Every effect is one Astro component. This is the whole setup.</p>
         </div>
       </div>
-      <div class="usage-chips" id="usage-chips">
+      <ToggleGroup
+        spacing={0}
+        class="usage-chips"
+        defaultValue={["0"]}
+        aria-label="Usage example"
+        id="usage-chips"
+      >
         {USAGE_ITEMS.map((u, i) => (
-          <button
-            class:list={["usage-chip", { on: i === 0 }]}
-            type="button"
+          <ToggleGroupItem
+            value={String(i)}
+            class="usage-chip"
             data-el={u.el}
             data-dd={JSON.stringify(u.data)}
             data-img={u.img ?? ""}
-            data-code={u.code}
           >
             {u.label}
-          </button>
+          </ToggleGroupItem>
         ))}
-      </div>
+      </ToggleGroup>
       <div class="usage-row">
-        <div class="usage-code card">
-          <div class="file-bar">
-            <span class="file-tab">src/pages/index.astro</span>
-            <CopyButton id="usage-copy" value={USAGE_ITEMS[0].code} label="Copy snippet" />
-          </div>
-          <div class="usage-pres">
-            {USAGE_ITEMS.map((u, i) => (
-              <div class:list={["uc", { on: i === 0 }]} data-uc={i}>
-                <Code code={u.code} lang="astro" theme="github-dark-dimmed" />
-              </div>
-            ))}
-          </div>
+        <div class="usage-code">
+          {USAGE_ITEMS.map((u, i) => (
+            <div class:list={["uc", { on: i === 0 }]} data-uc={i}>
+              <Code code={u.code} lang="astro" frame="code" title="src/pages/index.astro" />
+            </div>
+          ))}
         </div>
-        <div class="usage-live card" id="usage-live">
+        <Card.Root class="usage-live" id="usage-live">
           <DitherAurora />
-        </div>
+        </Card.Root>
       </div>
       <div hidden aria-hidden="true">
         <DitherImage src="/examples/landscape.jpg" alt="" />
@@ -172,8 +191,8 @@ const FOOTER_RISE = {
         <div class="sec-side strip-side">
           <a class="more" href="/docs/effects">Browse all effects</a>
           <span class="strip-arrows">
-            <button class="strip-btn" type="button" data-strip="-1" aria-label="Previous effects" disabled>&larr;</button>
-            <button class="strip-btn" type="button" data-strip="1" aria-label="Next effects">&rarr;</button>
+            <Button variant="outline" size="icon-sm" class="strip-btn" data-strip="-1" aria-label="Previous effects" disabled>&larr;</Button>
+            <Button variant="outline" size="icon-sm" class="strip-btn" data-strip="1" aria-label="Next effects">&rarr;</Button>
           </span>
         </div>
       </div>
@@ -181,13 +200,28 @@ const FOOTER_RISE = {
           {STRIP.map((s) => (
             <a class="strip-item" href={`/docs/effects/${s.slug}`}>
               <span class="strip-vis">
-                <dither-surface data-dither={JSON.stringify(s.data)} aria-hidden="true" />
+                <dither-surface data-dither={JSON.stringify({ ...s.data, bloom: 0.55, bloomRadius: 12 })} aria-hidden="true" />
               </span>
               <span class="strip-name">{s.name}</span>
               <code class="strip-code">{s.code}</code>
             </a>
           ))}
         </div>
+    </section>
+
+    {/* Showcase: everyday UI built from the components */}
+    <section class="section" id="showcase" data-enter style="--i:0">
+      <div class="sec-head">
+        <h2>Use it in real UI.</h2>
+        <div class="sec-side">
+          <p>Cards, players and buttons built from the same components.</p>
+        </div>
+      </div>
+      <div class="showcase-grid">
+        <GlobeCard />
+        <PlayerCard />
+        <PlanCard />
+      </div>
     </section>
 
     {/* C. Why astro-dither */}
@@ -199,7 +233,7 @@ const FOOTER_RISE = {
         </div>
       </div>
       <div class="why-grid">
-        <div class="card why-card">
+        <Card.Root class="why-card">
           <div class="why-vis why-js">
             <div class="why-js-rows">
               <span class="why-js-line"><span class="why-js-k">Page JS</span><span class="why-js-v">66 kB, 21.8 kB gzipped</span></span>
@@ -207,61 +241,58 @@ const FOOTER_RISE = {
               <span class="why-js-line"><span class="why-js-k">Hydration</span><span class="why-js-v dim">custom elements, no framework</span></span>
             </div>
           </div>
-          <div class="why-body">
+          <Card.Content class="why-body">
             <h3>No React, small script.</h3>
             <p>Plain Astro components and one custom element. Nothing to hydrate.</p>
-          </div>
-        </div>
-        <div class="card why-card">
+          </Card.Content>
+        </Card.Root>
+        <Card.Root class="why-card">
           <div class="why-vis">
             <div class="why-tiles">
               {WHY_TILES.map((t) => (
-                <dither-surface data-dither={JSON.stringify(t)} aria-hidden="true" />
+                <dither-surface data-dither={JSON.stringify({ ...t, bloom: 0.5, bloomRadius: 6 })} aria-hidden="true" />
               ))}
             </div>
-            <span class="why-badge">12 surfaces · 1 WebGL context</span>
+            <Badge tone="neutral" appearance="frosted" size="sm" class="why-badge">12 surfaces · 1 WebGL context</Badge>
           </div>
-          <div class="why-body">
+          <Card.Content class="why-body">
             <h3>Many effects, one context.</h3>
             <p>Every effect on a page shares one WebGL context, so a page can hold dozens.</p>
-          </div>
-        </div>
-        <div class="card why-card">
+          </Card.Content>
+        </Card.Root>
+        <Card.Root class="why-card">
           <div class="why-vis">
             <dither-surface data-dither='{"effect":"aurora","speed":0}' aria-hidden="true" />
             <span class="why-chips">
-              <span class="why-chip">aria-hidden</span>
-              <span class="why-chip">Reduced motion</span>
-              <span class="why-chip">Pauses offscreen</span>
+              <Badge tone="neutral" appearance="frosted" size="sm" class="why-chip">aria-hidden</Badge>
+              <Badge tone="neutral" appearance="frosted" size="sm" class="why-chip">Reduced motion</Badge>
+              <Badge tone="neutral" appearance="frosted" size="sm" class="why-chip">Pauses offscreen</Badge>
             </span>
           </div>
-          <div class="why-body">
+          <Card.Content class="why-body">
             <h3>Accessible by default.</h3>
             <p>Backgrounds stay out of screen readers, hold still for reduced motion and stop drawing when offscreen.</p>
-          </div>
-        </div>
+          </Card.Content>
+        </Card.Root>
       </div>
     </section>
 
     {/* D. Install band */}
     <section class="section" id="install" data-enter style="--i:0">
-      <div class="install-band card">
+      <Card.Root class="install-band">
         <div class="install-col">
           <h2>Install</h2>
           <p>Astro 5 or newer. One dependency: Paper Shaders.</p>
         </div>
         <div class="install-col install-mid">
-          <Snippet tabs={INSTALL_TABS} defaultTab="pnpm" />
+          <InstallSnippet />
         </div>
         <div class="install-col">
           <p class="install-own">Prefer owning the code?</p>
-          <p class="install-cli">
-            <code>npx astro-dither add aurora</code>
-            <CopyButton value="npx astro-dither add aurora" size="sm" label="Copy source command" />
-          </p>
+          <Code code="npx astro-dither add aurora" lang="bash" frame="terminal" />
           <a class="install-doc" href="/docs/copy-the-source">Read the CLI docs</a>
         </div>
-      </div>
+      </Card.Root>
       <div class="install-links">
         {INSTALL_LINKS.map(([label, href]) => (
           <a href={href}>{label}</a>
@@ -338,12 +369,7 @@ const FOOTER_RISE = {
     }
     .hero-aurora {
       position: absolute;
-      left: 0;
-      right: 0;
-      top: -25%;
-      height: 75%;
-      mask-image: linear-gradient(to bottom, #000 55%, transparent);
-      -webkit-mask-image: linear-gradient(to bottom, #000 55%, transparent);
+      inset: 0;
     }
     .hero-sky dither-surface,
     .hero-aurora dither-surface {
@@ -352,25 +378,18 @@ const FOOTER_RISE = {
       width: 100%;
       height: 100%;
     }
-    .h1-link {
-      color: inherit;
-      text-decoration: none;
-    }
-    .h1-link:hover {
-      text-decoration: underline;
-      text-underline-offset: 0.12em;
-    }
     .hero-inner {
       position: relative;
       z-index: 2;
       padding: 0 var(--margin);
     }
     .hero h1 {
-      font-size: clamp(1.5rem, 5vw, 4.25rem);
+      font-size: clamp(2.75rem, 8vw, 6.5rem);
       font-weight: 500;
-      letter-spacing: -0.03em;
-      line-height: 1.08;
+      letter-spacing: -0.045em;
+      line-height: 0.98;
       color: var(--ink);
+      text-shadow: 0 2px 32px rgba(0, 0, 0, 0.6);
     }
     .sub {
       margin-top: 22px;
@@ -385,15 +404,16 @@ const FOOTER_RISE = {
       justify-content: center;
       align-items: center;
     }
+    /* Command pill: an InputGroup field holding the install command + copy. */
     .cmd-pill {
-      display: inline-flex;
-      align-items: center;
-      gap: 10px;
+      width: auto;
       height: 44px;
-      padding: 0 8px 0 20px;
       border-radius: 999px;
-      border: 1px solid var(--line);
+      border-color: var(--line);
       background: var(--card);
+      padding-left: 12px;
+    }
+    .cmd-pill :global(input) {
       font-family: "Geist Mono", ui-monospace, monospace;
       font-size: 14px;
       color: var(--ink);
@@ -439,20 +459,10 @@ const FOOTER_RISE = {
       color: var(--accent);
     }
 
-    /* ---------- Shared card ---------- */
-    .card {
-      position: relative;
-      background: var(--card);
-      border: 1px solid var(--line);
-      border-radius: 16px;
-      overflow: hidden;
-      display: flex;
-      flex-direction: column;
-    }
-
     /* ---------- A. Write this, get this ---------- */
     .usage-chips {
       display: flex;
+      width: fit-content;
       gap: 8px;
       margin-bottom: 16px;
     }
@@ -472,7 +482,7 @@ const FOOTER_RISE = {
       color: var(--ink);
       border-color: #262a31;
     }
-    .usage-chip.on {
+    .usage-chip[data-state="on"] {
       background: var(--line);
       color: var(--ink);
     }
@@ -484,59 +494,27 @@ const FOOTER_RISE = {
     }
     .usage-code {
       min-height: 0;
-    }
-    .file-bar {
       display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 8px 12px;
-      border-bottom: 1px solid var(--line);
-      background: #14161a;
+      flex-direction: column;
     }
-    .file-tab {
-      font-family: "Geist Mono", ui-monospace, monospace;
-      font-size: 12px;
-      color: var(--muted);
-      padding: 3px 10px;
-      border: 1px solid var(--line);
-      border-radius: 6px;
-      background: var(--card);
-    }
-    .usage-pres {
-      flex: 1;
-      min-height: 0;
-      overflow-y: auto;
-      scrollbar-width: thin;
-      scrollbar-color: #2a2e35 transparent;
-    }
-    .usage-pres::-webkit-scrollbar {
-      width: 6px;
-    }
-    .usage-pres::-webkit-scrollbar-thumb {
-      background: #2a2e35;
-      border-radius: 3px;
-    }
-    .usage-pres::-webkit-scrollbar-track {
-      background: transparent;
-    }
-    .usage-pres .uc {
+    .usage-code .uc {
       display: none;
-      padding: 18px 20px;
     }
-    .usage-pres .uc.on {
+    .usage-code .uc.on {
       display: block;
+      flex: 1;
     }
-    .usage-pres pre {
+    .usage-code :global(.expressive-code) {
+      height: 100%;
       margin: 0;
-      background: transparent !important;
-      font-family: "Geist Mono", ui-monospace, monospace;
-      font-size: 13px;
-      line-height: 1.7;
     }
     .usage-live {
-      aspect-ratio: 4 / 3;
       position: relative;
+      aspect-ratio: 4 / 3;
+      padding: 0;
+      gap: 0;
       overflow: hidden;
+      border-radius: 16px;
     }
     :global(.usage-live > *) {
       position: absolute;
@@ -569,26 +547,12 @@ const FOOTER_RISE = {
       gap: 4px;
     }
     .strip-btn {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
       width: 32px;
       height: 32px;
-      border: 1px solid var(--line);
-      border-radius: 8px;
-      background: transparent;
-      color: var(--muted);
-      font-family: inherit;
-      cursor: pointer;
-      transition: color var(--t-hover) ease, border-color var(--t-hover) ease;
-    }
-    .strip-btn:hover:not(:disabled) {
-      color: var(--ink);
-      border-color: #262a31;
+      font-size: 14px;
     }
     .strip-btn:disabled {
       opacity: 0.3;
-      cursor: default;
     }
     .strip {
       display: flex;
@@ -620,6 +584,11 @@ const FOOTER_RISE = {
     .strip-item:hover .strip-vis {
       border-color: #262a31;
     }
+    /* The surfaces bloom brighter on hover through the bloom's CSS variables. */
+    .strip-item:hover dither-surface,
+    .strip-item:focus-visible dither-surface {
+      --dither-bloom: 1;
+    }
     .strip-vis dither-surface {
       position: absolute;
       inset: 0;
@@ -644,6 +613,14 @@ const FOOTER_RISE = {
       line-height: 1.5;
       color: var(--muted);
       overflow: hidden;
+    }
+
+    /* ---------- Showcase ---------- */
+    .showcase-grid {
+      display: grid;
+      grid-template-columns: 1.5fr 1fr 1fr;
+      gap: 16px;
+      align-items: stretch;
     }
 
     /* ---------- C. Why astro-dither ---------- */
@@ -684,17 +661,19 @@ const FOOTER_RISE = {
       border-radius: 4px;
       overflow: hidden;
     }
+    .why-card {
+      padding: 0;
+      gap: 0;
+      overflow: hidden;
+      border-radius: 16px;
+    }
     .why-badge {
       position: absolute;
       right: 8px;
       bottom: 8px;
       font-size: 11px;
       font-family: "Geist Mono", ui-monospace, monospace;
-      color: var(--ink);
-      background: rgba(11, 12, 14, 0.85);
-      border: 1px solid var(--line);
-      border-radius: 6px;
-      padding: 3px 8px;
+      font-weight: 400;
     }
     .why-chips {
       position: absolute;
@@ -707,11 +686,7 @@ const FOOTER_RISE = {
     .why-chip {
       font-size: 11px;
       font-family: "Geist Mono", ui-monospace, monospace;
-      color: var(--ink);
-      background: rgba(11, 12, 14, 0.85);
-      border: 1px solid var(--line);
-      border-radius: 6px;
-      padding: 3px 8px;
+      font-weight: 400;
     }
     .why-js {
       display: flex;
@@ -769,10 +744,7 @@ const FOOTER_RISE = {
       grid-template-columns: 1fr 1.2fr 1fr;
       gap: 40px;
       padding: 40px;
-      flex-direction: row;
-    }
-    .install-band.card {
-      flex-direction: row;
+      border-radius: 16px;
     }
     .install-col h2 {
       font-size: 26px;
@@ -787,21 +759,10 @@ const FOOTER_RISE = {
       font-size: 14px;
       color: var(--ink);
       font-weight: 500;
+      margin-bottom: 10px;
     }
-    .install-cli {
-      margin-top: 10px;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      flex-wrap: wrap;
-    }
-    .install-cli code {
-      font-family: "Geist Mono", ui-monospace, monospace;
-      font-size: 13px;
-      color: var(--ink);
-      background: var(--line);
-      padding: 4px 8px;
-      border-radius: 6px;
+    .install-band :global(.expressive-code) {
+      margin: 0;
     }
     .install-doc {
       display: inline-block;
@@ -954,6 +915,12 @@ const FOOTER_RISE = {
       .why-grid {
         grid-template-columns: 1fr;
       }
+      .showcase-grid {
+        grid-template-columns: 1fr 1fr;
+      }
+      .showcase-grid > :first-child {
+        grid-column: 1 / -1;
+      }
       .install-band {
         grid-template-columns: 1fr;
         gap: 28px;
@@ -974,6 +941,9 @@ const FOOTER_RISE = {
       }
       .strip-item {
         width: calc((100% - 16px) / 1.2);
+      }
+      .showcase-grid {
+        grid-template-columns: 1fr;
       }
       .install-band {
         padding: 24px;
@@ -1000,25 +970,25 @@ const FOOTER_RISE = {
   </style>
 
   <script>
-    // Write this, get this: chips swap the code block and the live surface.
+    // Write this, get this: the chips are a single-select Starwind ToggleGroup.
     const usageLive = document.getElementById("usage-live");
-    const usageCopy = document.getElementById("usage-copy");
-    document.querySelectorAll<HTMLElement>(".usage-chip").forEach((chip, i) => {
-      chip.addEventListener("click", () => {
-        document.querySelectorAll<HTMLElement>(".usage-chip").forEach((c) => c.classList.remove("on"));
-        chip.classList.add("on");
-        document.querySelectorAll<HTMLElement>("[data-uc]").forEach((uc) => {
-          uc.classList.toggle("on", Number(uc.dataset.uc) === i);
-        });
-        usageCopy?.setAttribute("data-value", chip.dataset.code ?? "");
-        if (usageLive) {
-          const el = document.createElement(chip.dataset.el ?? "dither-surface");
-          el.setAttribute("aria-hidden", "true");
-          el.setAttribute("data-dither", chip.dataset.dd ?? "{}");
-          if (chip.dataset.img) el.innerHTML = chip.dataset.img;
-          usageLive.replaceChildren(el);
-        }
+    const usageChips = document.getElementById("usage-chips");
+    usageChips?.addEventListener("starwind:value-change", (e) => {
+      if (!(e instanceof CustomEvent)) return;
+      const detail = e.detail as { value?: string[]; toggleValue?: string };
+      const i = Number(Array.isArray(detail.value) ? detail.value[0] : detail.toggleValue);
+      const chip = usageChips.querySelector<HTMLElement>(`[data-sw-toggle][data-value="${i}"]`);
+      if (!chip) return;
+      document.querySelectorAll<HTMLElement>("[data-uc]").forEach((uc) => {
+        uc.classList.toggle("on", Number(uc.dataset.uc) === i);
       });
+      if (usageLive) {
+        const el = document.createElement(chip.dataset.el ?? "dither-surface");
+        el.setAttribute("aria-hidden", "true");
+        el.setAttribute("data-dither", chip.dataset.dd ?? "{}");
+        if (chip.dataset.img) el.innerHTML = chip.dataset.img;
+        usageLive.replaceChildren(el);
+      }
     });
 
     // Effects filmstrip arrows: scroll the strip, disable at the ends.

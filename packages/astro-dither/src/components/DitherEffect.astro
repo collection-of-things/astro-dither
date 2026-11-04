@@ -10,11 +10,19 @@ interface Props<E extends EffectName = EffectName> {
   cell?: number;
   matrix?: 2 | 4 | 8 | "noise";
   speed?: number;
+  /** Tones the field snaps to before dithering. Low values give hard steps. */
+  levels?: number;
+  /** The moment drawn when motion is off or reduced, in seconds. */
+  stillTime?: number;
+  /** Bloom around lit cells, 0 to 1. 0 adds none. CSS `--dither-bloom` overrides it, for hover states. */
+  bloom?: number;
+  /** Bloom blur in CSS pixels. CSS `--dither-bloom-radius` overrides it. */
+  bloomRadius?: number;
   class?: string;
 }
 
-const { class: className, effect, params, palette, cell, matrix, speed } = Astro.props;
-const encoded = orderedDitherAttribute({ effect, params, palette, cell, matrix, speed });
+const { class: className, effect, params, palette, cell, matrix, speed, levels, stillTime, bloom, bloomRadius } = Astro.props;
+const encoded = orderedDitherAttribute({ effect, params, palette, cell, matrix, speed, levels, stillTime, bloom, bloomRadius });
 ---
 
 <dither-surface class={className} data-dither={encoded} aria-hidden="true"></dither-surface>

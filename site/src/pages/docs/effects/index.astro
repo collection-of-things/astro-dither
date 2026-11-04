@@ -1,5 +1,6 @@
 ---
 import DocsLayout from "../../../layouts/DocsLayout.astro";
+import Card from "../../../components/starwind/card";
 import { DitherEffect, DitherGlobe } from "astro-dither";
 import { EFFECTS, EFFECT_GROUP_ORDER } from "../../../docs/registry";
 ---
@@ -16,18 +17,20 @@ import { EFFECTS, EFFECT_GROUP_ORDER } from "../../../docs/registry";
         <h2>{group}</h2>
         <div class="catalog">
           {EFFECTS.filter((e) => e.group === group).map((e) => (
-            <a class="cat-card" href={`/docs/effects/${e.slug}`}>
-              <span class="cat-vis">
-                {e.slug === "globe" ? (
-                  <DitherGlobe />
-                ) : (
-                  <DitherEffect effect={e.slug} />
-                )}
-              </span>
-              <span class="cat-cap">
-                <span class="cat-name">{e.title}</span>
-                <span class="cat-desc">{e.description}</span>
-              </span>
+            <a class="cat-link" href={`/docs/effects/${e.slug}`}>
+              <Card.Root class="cat-card">
+                <span class="cat-vis">
+                  {e.slug === "globe" ? (
+                    <DitherGlobe />
+                  ) : (
+                    <DitherEffect effect={e.slug} />
+                  )}
+                </span>
+                <span class="cat-cap">
+                  <span class="cat-name">{e.title}</span>
+                  <span class="cat-desc">{e.description}</span>
+                </span>
+              </Card.Root>
             </a>
           ))}
         </div>
@@ -43,16 +46,18 @@ import { EFFECTS, EFFECT_GROUP_ORDER } from "../../../docs/registry";
     gap: 16px;
     margin-bottom: 32px;
   }
-  .cat-card {
+  .cat-link {
     display: block;
-    border: 1px solid var(--line);
-    border-radius: 14px;
-    background: var(--card);
-    overflow: hidden;
     text-decoration: none;
+  }
+  .cat-card {
+    padding: 0;
+    gap: 0;
+    border-radius: 14px;
+    overflow: hidden;
     transition: border-color var(--t-hover) ease;
   }
-  .cat-card:hover {
+  .cat-link:hover .cat-card {
     border-color: #262a31;
   }
   .cat-vis {
