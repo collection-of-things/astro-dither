@@ -37,6 +37,7 @@
     "./DitherEffect.astro": "./src/components/DitherEffect.astro",
     "./DitherGlobe.astro": "./src/components/DitherGlobe.astro",
     "./effects": "./src/lib/effects.ts",
+    "./THIRD_PARTY_NOTICES.md": "./THIRD_PARTY_NOTICES.md",
     "./assets/land.png": "./src/assets/land.png"
   },
   "files": [

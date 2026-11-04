@@ -192,6 +192,8 @@ Import components, `ditherPresets`, `effects`, and `auroraPalette` from `astro-d
 
 Individual component exports, such as `astro-dither/DitherAurora.astro`, are available. `astro-dither/effects` exposes the registry and its types. Astro consumes the shipped `.astro` and TypeScript source directly; no separate library build is needed.
 
+`astro-dither/THIRD_PARTY_NOTICES.md` exports the attribution document. In Astro, import it with `?raw` to display its text.
+
 ## Credits and licence
 
 [Paper Shaders](https://shaders.paper.design) supplies the animated shapes and image filter. [Leo's dithercn](https://dithercn.vercel.app) inspired the project. The remaining effects use this package's own GLSL and ordered-dither renderer.

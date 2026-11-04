@@ -85,7 +85,8 @@ def gallery():
         fragment = (glsl(ENGINE, 'FRAGMENT_HEAD') + declarations +
                     glsl(ENGINE, 'FRAGMENT_HELPERS') + effect['field'] + glsl(ENGINE, 'FRAGMENT_MAIN'))
         program = ctx.program(vertex_shader=glsl(ENGINE, 'VERTEX'), fragment_shader=fragment)
-        settings = dict(u_resolution=(380, 264), u_cell=2, u_matrix=8,
+        # Match the browser at DPR 1: one framebuffer pixel per 2px CSS cell.
+        settings = dict(u_resolution=(190, 132), u_cell=1, u_matrix=8,
                         u_time=effect['stillTime'], u_colorCount=len(effect['palette']), u_levels=0)
         settings.update({f'p_{key}': value for key, value in effect['params'].items()})
         for key, value in settings.items():
@@ -94,11 +95,12 @@ def gallery():
         palette = [tuple(int(color[i:i+2], 16)/255 for i in (1, 3, 5)) + (1.,) for color in effect['palette']]
         palette += [(0., 0., 0., 1.)] * (8-len(palette))
         program['u_palette'].write(struct.pack('32f', *(v for color in palette for v in color)))
-        target = ctx.simple_framebuffer((380, 264))
+        target = ctx.simple_framebuffer((190, 132))
         target.use()
         vao = ctx.simple_vertex_array(program, vertices, 'a_position')
         vao.render()
-        tile = Image.frombytes('RGB', (380, 264), target.read(components=3)).transpose(Image.Transpose.FLIP_TOP_BOTTOM)
+        tile = Image.frombytes('RGB', (190, 132), target.read(components=3)).transpose(Image.Transpose.FLIP_TOP_BOTTOM)
+        tile = tile.resize((380, 264), Image.Resampling.NEAREST)
         x, y = 10 + (index % 3)*400, 10 + (index // 3)*340
         sheet.paste(tile, (x, y))
         ImageDraw.Draw(sheet).text((x+4, y+278), name, font=font(22), fill='#a1a8b3')
