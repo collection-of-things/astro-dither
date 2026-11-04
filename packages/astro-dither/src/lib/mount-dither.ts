@@ -17,6 +17,7 @@ class DitherCanvas extends HTMLElement {
   /** Use the component's colours when Paper cannot create or keep a context. */
   private showFallback = (): void => {
     const settings = parseDitherSettings(this.dataset.dither);
+    this.shader?.canvasElement.removeEventListener("webglcontextlost", this.showFallback);
     this.shader?.dispose();
     this.shader = undefined;
     this.querySelectorAll("canvas").forEach((canvas) => canvas.remove());
@@ -58,6 +59,7 @@ class DitherCanvas extends HTMLElement {
 
   disconnectedCallback(): void {
     this.reducedMotion?.removeEventListener("change", this.onMotionChange);
+    this.shader?.canvasElement.removeEventListener("webglcontextlost", this.showFallback);
     this.shader?.dispose();
     this.shader = undefined;
   }

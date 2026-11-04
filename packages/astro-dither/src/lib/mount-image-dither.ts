@@ -40,6 +40,7 @@ class DitherImage extends HTMLElement {
 
   disconnectedCallback(): void {
     this.reducedMotion?.removeEventListener("change", this.onMotionChange);
+    this.shader?.canvasElement.removeEventListener("webglcontextlost", this.showFallback);
     this.shader?.dispose();
     this.shader = undefined;
     this.revealImage();
@@ -76,6 +77,7 @@ class DitherImage extends HTMLElement {
 
   /** Remove Paper's partially constructed canvas and keep the full-size photograph. */
   private showFallback = (): void => {
+    this.shader?.canvasElement.removeEventListener("webglcontextlost", this.showFallback);
     this.shader?.dispose();
     this.shader = undefined;
     this.querySelectorAll("canvas").forEach((canvas) => canvas.remove());

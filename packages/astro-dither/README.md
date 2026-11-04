@@ -184,7 +184,7 @@ Every component fills its parent. Ordered effects share one WebGL2 context; Pape
 
 Background elements are `aria-hidden`. Put meaningful text alongside them. If WebGL2 is unavailable or a context fails, ordered surfaces show a static palette gradient, `Dither` shows a gradient between its colours, and `DitherImage` keeps the full-size original photo. Every component dispatches a bubbling `dither:ready` event after drawing its first frame.
 
-The demo home page's initial static JavaScript graph is 205.8 kB (70.0 kB gzipped), including shared UI, static module imports and inline scripts. Lazy dynamic chunks loaded later are excluded. This measures the demo page, not the library alone. From the repository root, run `pnpm build` followed by `node scripts/measure-page-js.mjs` to measure it again. Gzip totals sum each script compressed separately.
+The demo home page's initial static JavaScript graph is 206.1 kB (70.1 kB gzipped), including shared UI, static module imports and inline scripts. Lazy dynamic chunks loaded later are excluded. This measures the demo page, not the library alone. From the repository root, run `pnpm build` followed by `node scripts/measure-page-js.mjs` to measure it again. Gzip totals sum each script compressed separately.
 
 `@paper-design/shaders` is pinned because it publishes breaking changes under `0.0.x`.
 

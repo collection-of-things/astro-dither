@@ -130,7 +130,7 @@ assets/                icon and README images
 
 ## Development
 
-The production home page's initial static JavaScript graph is 205.8 kB (70.0 kB gzipped), including shared UI, static module imports and inline scripts. Lazy dynamic chunks loaded later are excluded. This is the demo page's size, not the library alone. Run `pnpm build` and `node scripts/measure-page-js.mjs` to repeat the measurement. Gzip totals sum each script compressed separately.
+The production home page's initial static JavaScript graph is 206.1 kB (70.1 kB gzipped), including shared UI, static module imports and inline scripts. Lazy dynamic chunks loaded later are excluded. This is the demo page's size, not the library alone. Run `pnpm build` and `node scripts/measure-page-js.mjs` to repeat the measurement. Gzip totals sum each script compressed separately.
 
 Requires Node 22.23.4 or newer (`.nvmrc`) and pnpm (`packageManager` pins 12.11.2).
 

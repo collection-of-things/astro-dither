@@ -217,8 +217,10 @@ class DitherSurface extends HTMLElement {
   private lastTick = 0;
   private readySent = false;
   private glCanvas: HTMLCanvasElement | undefined;
+  private connection = 0;
 
   connectedCallback(): void {
+    const connection = ++this.connection;
     const settings = parseOrderedDither(this.dataset.dither);
     this.settings = settings;
     this.removeAttribute("data-dither-fallback");
@@ -257,7 +259,7 @@ class DitherSurface extends HTMLElement {
     if (def.usesImage === true && settings.src !== "") {
       const image = new Image();
       image.onload = () => {
-        if (!this.isConnected) return;
+        if (!this.isConnected || connection !== this.connection) return;
         const shared = getRenderer();
         try {
           if (shared) this.texture = createTexture(shared.gl, image);
@@ -272,7 +274,9 @@ class DitherSurface extends HTMLElement {
         this.draw();
         this.updatePlayback();
       };
-      image.onerror = () => this.showFallback();
+      image.onerror = () => {
+        if (this.isConnected && connection === this.connection) this.showFallback();
+      };
       image.src = settings.src;
       return;
     }
@@ -285,6 +289,7 @@ class DitherSurface extends HTMLElement {
   }
 
   disconnectedCallback(): void {
+    this.connection++;
     this.pause();
     this.resizeObserver?.disconnect();
     this.intersectionObserver?.disconnect();
@@ -495,6 +500,10 @@ function createTexture(gl: WebGL2RenderingContext, image: HTMLImageElement): Web
   gl.bindTexture(gl.TEXTURE_2D, texture);
   gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, 0);
   gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, image);
+  if (gl.getError() !== gl.NO_ERROR) {
+    gl.deleteTexture(texture);
+    return undefined;
+  }
   gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
   gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
   gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.REPEAT);
