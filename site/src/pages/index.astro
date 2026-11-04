@@ -89,8 +89,8 @@ const INSTALL_LINKS = [
 
 const FOOTER_RISE = {
   effect: "rise",
-  params: { height: 0.66, wave: 0.05, grain: 0.35 },
-  palette: ["#000000", "#02060d", "#061a33", "#0b4f99", "#00b2ff", "#d6efff"],
+  params: { height: 0.75, wave: 0.05, grain: 0.35 },
+  palette: ["#000000", "#020812", "#05173a", "#0a2a66", "#0f3f94", "#1a5bc4"],
   cell: 4,
   speed: 0.5,
 };
@@ -326,6 +326,7 @@ const FOOTER_RISE = {
       position: relative;
       height: 100svh;
       min-height: 560px;
+      padding-top: 60px;
       display: grid;
       place-items: center;
       text-align: center;
@@ -841,6 +842,12 @@ const FOOTER_RISE = {
       padding-top: 64px;
       padding-bottom: 64px;
     }
+    .nav-brand {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      text-decoration: none;
+    }
     .footer-brand p {
       margin-top: 14px;
       font-size: 14px;
@@ -918,15 +925,11 @@ const FOOTER_RISE = {
       align-items: center;
       gap: 16px;
       font-size: 13px;
-      color: #f2f4f7;
-      background: rgba(2, 6, 13, 0.45);
-      border-radius: 8px;
-      padding: 8px 12px;
+      color: #d9e2f0;
       width: 100%;
-      backdrop-filter: blur(4px);
     }
     .band-row a {
-      color: inherit;
+      color: #f2f4f7;
       text-decoration: none;
     }
     .band-row a:hover {
