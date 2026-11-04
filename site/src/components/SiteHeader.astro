@@ -371,9 +371,13 @@ function isActive(label: string): boolean {
     selected = 0;
     renderResults(results.slice(0, 20));
   }
+  const lenisApi = () =>
+    (window as { __lenis?: { stop(): void; start(): void } }).__lenis;
+
   async function openSearch(): Promise<void> {
     dialog?.removeAttribute("hidden");
     document.getElementById("site-sheet")?.setAttribute("hidden", "");
+    lenisApi()?.stop();
     input?.focus();
     if (index === undefined) {
       const res = await fetch("/search.json");
@@ -383,15 +387,20 @@ function isActive(label: string): boolean {
   }
   function closeSearch(): void {
     dialog?.setAttribute("hidden", "");
+    lenisApi()?.start();
   }
 
   document.querySelectorAll("[data-open-search]").forEach((b) => b.addEventListener("click", () => void openSearch()));
   document.querySelectorAll("[data-close-search]").forEach((b) => b.addEventListener("click", closeSearch));
-  document.querySelector("[data-open-menu]")?.addEventListener("click", () =>
-    document.getElementById("site-sheet")?.removeAttribute("hidden"),
-  );
+  document.querySelector("[data-open-menu]")?.addEventListener("click", () => {
+    document.getElementById("site-sheet")?.removeAttribute("hidden");
+    lenisApi()?.stop();
+  });
   document.querySelectorAll("[data-close-menu], .sheet-panel a").forEach((b) =>
-    b.addEventListener("click", () => document.getElementById("site-sheet")?.setAttribute("hidden", "")),
+    b.addEventListener("click", () => {
+      document.getElementById("site-sheet")?.setAttribute("hidden", "");
+      lenisApi()?.start();
+    }),
   );
 
   document.addEventListener("keydown", (e) => {

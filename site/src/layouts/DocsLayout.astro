@@ -157,11 +157,17 @@ const mdPath = md ?? `${href === "/docs" ? "/docs" : href}.md`;
       addEventListener("scroll", mark, { passive: true });
       mark();
     }
-    document.querySelector("[data-open-drawer]")?.addEventListener("click", () =>
-      document.getElementById("docs-drawer")?.removeAttribute("hidden"),
-    );
+    const lenisApi = () =>
+      (window as { __lenis?: { stop(): void; start(): void } }).__lenis;
+    document.querySelector("[data-open-drawer]")?.addEventListener("click", () => {
+      document.getElementById("docs-drawer")?.removeAttribute("hidden");
+      lenisApi()?.stop();
+    });
     document.querySelectorAll("[data-close-drawer], .drawer-panel a").forEach((b) =>
-      b.addEventListener("click", () => document.getElementById("docs-drawer")?.setAttribute("hidden", "")),
+      b.addEventListener("click", () => {
+        document.getElementById("docs-drawer")?.setAttribute("hidden", "");
+        lenisApi()?.start();
+      }),
     );
   </script>
 </Base>

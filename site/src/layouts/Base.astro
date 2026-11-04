@@ -35,6 +35,26 @@ const { title, description = "Animated dither backgrounds, gradients and image e
   <body id="top">
     <SiteHeader />
     <slot />
+    <script>
+      import Lenis from "lenis";
+      import "lenis/dist/lenis.css";
+
+      // Lenis keeps native scroll position, so IntersectionObserver-based
+      // pausing and entrance animations keep firing.
+      if (!matchMedia("(prefers-reduced-motion: reduce)").matches) {
+        document
+          .querySelectorAll(
+            "pre, .side, .toc, .table-wrap, .strip, .usage-pres, #search-results, .sheet-panel, .drawer-panel",
+          )
+          .forEach((el) => el.setAttribute("data-lenis-prevent", ""));
+        // Anchor targets already carry scroll-margin-top for the fixed header, which Lenis honours.
+        (window as unknown as { __lenis?: Lenis }).__lenis = new Lenis({
+          autoRaf: true,
+          lerp: 0.1,
+          anchors: true,
+        });
+      }
+    </script>
   </body>
 </html>
 
@@ -62,6 +82,17 @@ const { title, description = "Animated dither backgrounds, gradients and image e
 
   html {
     overflow-x: clip;
+  }
+  [id] {
+    scroll-margin-top: var(--header-offset);
+  }
+  @media (prefers-reduced-motion: no-preference) {
+    html {
+      scroll-behavior: smooth;
+    }
+    html.lenis {
+      scroll-behavior: auto;
+    }
   }
   *,
   *::before,

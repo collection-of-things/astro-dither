@@ -1041,9 +1041,12 @@ const FOOTER_RISE = {
     addEventListener("resize", stripUpdate);
     stripUpdate();
 
-    // Back to top: smooth unless the visitor prefers reduced motion.
+    // Back to top: through Lenis when it is running, smooth otherwise,
+    // instant when the visitor prefers reduced motion.
     document.querySelector("[data-top]")?.addEventListener("click", (e) => {
       e.preventDefault();
+      const lenis = (window as { __lenis?: { scrollTo(t: number): void } }).__lenis;
+      if (lenis) return lenis.scrollTo(0);
       const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
       scrollTo({ top: 0, behavior: reduced ? "auto" : "smooth" });
     });
