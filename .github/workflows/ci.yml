@@ -27,4 +27,4 @@ jobs:
       - run: pnpm build
 
       - name: Pack the library as a smoke test
-        run: pnpm --filter astro-dither pack && tar -tf packages/astro-dither/astro-dither-*.tgz
+        run: pnpm --filter astro-dither pack --pack-destination "$RUNNER_TEMP" && tar -tf "$RUNNER_TEMP"/astro-dither-*.tgz
