@@ -1,3 +1,7 @@
 packages:
   - "packages/*"
   - "site"
+
+overrides:
+  # astro2tsx pairs wasm-runtime 1.2.4 with emnapi core 1.x.
+  "@napi-rs/wasm-runtime@1.2.4>@emnapi/runtime": "1.11.3"
