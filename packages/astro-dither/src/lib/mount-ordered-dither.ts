@@ -413,6 +413,7 @@ class DitherSurface extends HTMLElement {
     ].join(";");
   }
 
+  /** Cover the host with square cells and use the requested time for still or reduced-motion frames. */
   private draw(): void {
     if (this.hasAttribute("data-dither-fallback")) return;
     const shared = getRenderer();
@@ -431,7 +432,12 @@ class DitherSurface extends HTMLElement {
     // pixel per cell and let CSS scale it up with hard edges. That is cell² × dpr²
     // fewer pixels to shade and to copy out of the shared context.
     const dpr = Math.min(window.devicePixelRatio || 1, 2);
-    const cellPx = Math.max(1, Math.round(settings.cell * dpr));
+    // Grow square cells together when needed, keeping the full box covered within the GPU limit.
+    const cellPx = Math.max(
+      1,
+      Math.round(settings.cell * dpr),
+      Math.ceil((Math.max(this.clientWidth, this.clientHeight) * dpr) / MAX_CELLS),
+    );
     const width = Math.min(MAX_CELLS, Math.max(1, Math.ceil((this.clientWidth * dpr) / cellPx)));
     const height = Math.min(MAX_CELLS, Math.max(1, Math.ceil((this.clientHeight * dpr) / cellPx)));
     const sizeKey = `${width}x${height}x${cellPx}x${this.clientWidth}x${this.clientHeight}`;
@@ -469,7 +475,9 @@ class DitherSurface extends HTMLElement {
     setFloat(locations, gl, "u_cell", 1);
     setFloat(locations, gl, "u_matrix", matrixNumber(settings.matrix));
     setVec2(locations, gl, "u_resolution", width, height);
-    setFloat(locations, gl, "u_time", settings.stillTime + this.clock);
+    // Keep the animation clock for resuming, but draw static frames at the exact requested moment.
+    const still = settings.speed === 0 || (this.reducedMotion?.matches ?? false);
+    setFloat(locations, gl, "u_time", settings.stillTime + (still ? 0 : this.clock));
     for (const [key, value] of Object.entries(settings.params)) {
       setFloat(locations, gl, `p_${key}`, value);
     }
@@ -539,8 +547,10 @@ class DitherSurface extends HTMLElement {
     this.rafId = requestAnimationFrame(this.tick);
   };
 
+  /** Pause hidden surfaces and redraw the requested still frame when reduced motion is enabled. */
   private onPreferenceChange = (): void => {
     this.updatePlayback();
+    if (!document.hidden && this.reducedMotion?.matches) this.draw();
   };
 }
 
@@ -559,7 +569,8 @@ const textures = new Map<string, SharedTexture>();
 
 /**
  * One texture per image URL, shared by every surface that samples it. Callers hold the entry and
- * hand it back to releaseTexture, so a load that outlives a context loss cannot release its replacement.
+ * hand it back to releaseTexture. A load dropped by a context loss cannot upload into the restored
+ * context or release its replacement.
  */
 function acquireTexture(src: string): SharedTexture {
   const cached = textures.get(src);
@@ -571,6 +582,10 @@ function acquireTexture(src: string): SharedTexture {
     const image = new Image();
     image.crossOrigin = "anonymous";
     image.onload = () => {
+      if (textures.get(src) !== entry) {
+        resolve(undefined);
+        return;
+      }
       const shared = getRenderer();
       try {
         resolve(shared ? createTexture(shared.gl, image) : undefined);
