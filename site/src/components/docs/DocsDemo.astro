@@ -387,6 +387,8 @@ const initialCode = tpl.replace("{props}", propCode(seed));
       if (codeEl) codeEl.textContent = text;
       codeCopy?.setAttribute("data-code", text);
     };
+    const expandRoot = demo.querySelector<HTMLElement>("[data-sw-dialog]");
+    const expandLive = demo.querySelector<HTMLElement>("[data-expand-live]");
     const remount = (withSkeleton = false) => {
       if (!live) return;
       if (withSkeleton && skeleton) showSkeleton(skeleton);
@@ -398,6 +400,17 @@ const initialCode = tpl.replace("{props}", propCode(seed));
       if (imgHtml) el.innerHTML = imgHtml;
       live.replaceChildren(el);
       if (skeleton) live.prepend(skeleton);
+      renderCode();
+    };
+    // Controls update the running element in place, so the motion does not restart on every tick of a slider.
+    const apply = () => {
+      const payload = JSON.stringify({ ...currentData(), ...engineData() });
+      const targets = [live, expandLive].flatMap((host) => Array.from(host?.querySelectorAll<HTMLElement>("[data-dither]") ?? []));
+      if (targets.length === 0) {
+        remount();
+        return;
+      }
+      for (const el of targets) el.setAttribute("data-dither", payload);
       renderCode();
     };
     const setOut = (key: string, v: unknown) => {
@@ -426,8 +439,6 @@ const initialCode = tpl.replace("{props}", propCode(seed));
     // Replay
     demo.querySelector("[data-replay]")?.addEventListener("click", () => remount(true));
     // Expand: a full-screen dialog whose live area is filled on open.
-    const expandRoot = demo.querySelector<HTMLElement>("[data-sw-dialog]");
-    const expandLive = demo.querySelector<HTMLElement>("[data-expand-live]");
     expandRoot?.addEventListener("starwind:open-change", (e) => {
       if (!(e instanceof CustomEvent)) return;
       const open = (e.detail as { open?: boolean }).open === true;
@@ -473,7 +484,7 @@ const initialCode = tpl.replace("{props}", propCode(seed));
         if (typeof raw !== "number") return;
         setValue(root.dataset.key ?? "", root.dataset.param === "1", raw);
         setOut(root.dataset.key ?? "", raw);
-        remount();
+        apply();
       } else if (root.dataset.swatches !== undefined) {
         // Colour dots: a pick, not a selection — cancel the group state and ring the dot.
         e.preventDefault();
@@ -483,7 +494,7 @@ const initialCode = tpl.replace("{props}", propCode(seed));
         delete state.palette;
         // The cancelled change resets aria-pressed; mark the dot after it settles.
         requestAnimationFrame(() => markChosen(root, v));
-        remount();
+        apply();
       } else if (root.dataset.pals !== undefined) {
         // Palette presets clear the colour props.
         e.preventDefault();
@@ -495,7 +506,7 @@ const initialCode = tpl.replace("{props}", propCode(seed));
           s.removeAttribute("data-on");
           s.setAttribute("aria-pressed", "false");
         });
-        remount();
+        apply();
       } else if (root.dataset.triplet === "1") {
         // Colour-triplet presets (DitherImage)
         e.preventDefault();
@@ -504,7 +515,7 @@ const initialCode = tpl.replace("{props}", propCode(seed));
         if (back) state.colorBack = back;
         if (front) state.colorFront = front;
         if (hi) state.colorHighlight = hi;
-        remount();
+        apply();
       } else if (root.hasAttribute("data-sw-toggle-group") || root.hasAttribute("data-sw-select")) {
         const key = root.dataset.key;
         if (key === undefined) return;
@@ -515,7 +526,7 @@ const initialCode = tpl.replace("{props}", propCode(seed));
           return;
         }
         setValue(key, root.dataset.param === "1", numOrRaw(String(raw)));
-        remount();
+        apply();
       }
     });
     demo.addEventListener("starwind:checked-change", (e) => {
@@ -529,7 +540,7 @@ const initialCode = tpl.replace("{props}", propCode(seed));
       } else {
         setValue(root.dataset.key ?? "", root.dataset.param === "1", checked);
       }
-      remount();
+      apply();
     });
     renderCode();
   });

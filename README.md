@@ -53,7 +53,7 @@ import { DitherAurora } from "astro-dither";
 </section>
 ```
 
-The 18 procedural registry effects work the same way. For the nineteenth effect, use `DitherGlobe`, which supplies the required land mask. `<DitherEffect effect="globe" />` stays blank because it does not accept a mask source.
+All 19 registry effects work the same way. The globe samples a land mask: `DitherEffect` uses the bundled one unless you pass `src`, and `DitherGlobe` wraps it with typed `lat`, `lon` and `sea` props.
 
 ```astro
 ---
@@ -73,7 +73,7 @@ import { DitherEffect } from "astro-dither";
 | `DitherImage` | Ordered dithering over any image. Keeps the `img` and its alt. | [API](https://github.com/screen-gd/astro-dither/tree/main/packages/astro-dither#ditherimage) |
 | `DitherGradient` | Linear, radial, conic or wave gradients. | [API](https://github.com/screen-gd/astro-dither/tree/main/packages/astro-dither#wrappers) |
 | `DitherAurora` | The aurora effect with all its knobs. | [API](https://github.com/screen-gd/astro-dither/tree/main/packages/astro-dither#wrappers) |
-| `DitherEffect` | The 18 procedural effects, animated or still. Use `DitherGlobe` for the globe. | [API](https://github.com/screen-gd/astro-dither/tree/main/packages/astro-dither#dithereffect) |
+| `DitherEffect` | All 19 registry effects, animated or still. | [API](https://github.com/screen-gd/astro-dither/tree/main/packages/astro-dither#dithereffect) |
 | `DitherGlobe` | A spinning, lit globe dithered from a land mask. | [API](https://github.com/screen-gd/astro-dither/tree/main/packages/astro-dither#wrappers) |
 
 ## Effects

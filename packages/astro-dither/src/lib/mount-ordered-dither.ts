@@ -11,7 +11,7 @@ void main() {
 `;
 
 const FRAGMENT_HEAD = `#version 300 es
-precision mediump float;
+precision highp float;
 
 uniform vec2 u_resolution;
 uniform float u_cell;
@@ -132,6 +132,7 @@ interface OrderedRenderer {
   gl: WebGL2RenderingContext;
   canvas: HTMLCanvasElement;
   programs: Map<EffectName, EffectProgram | "failed">;
+  lost: boolean;
 }
 
 interface EffectProgram {
@@ -144,13 +145,34 @@ let renderer: OrderedRenderer | "failed" | undefined;
 /** One shared GL context for every `<dither-surface>`. Browsers cap live WebGL contexts per page, so each element owns a 2D canvas and copies its frame out. */
 function getRenderer(): OrderedRenderer | undefined {
   if (renderer === "failed") return undefined;
-  if (renderer) return renderer;
+  if (renderer) return renderer.lost ? undefined : renderer;
   const canvas = document.createElement("canvas");
   const gl = canvas.getContext("webgl2", { alpha: true, antialias: false, premultipliedAlpha: false });
   if (!gl) {
     renderer = "failed";
     return undefined;
   }
+  setupContext(gl);
+  // A lost context takes every program and texture with it. Hold the palette fallback
+  // until the browser hands the context back, then rebuild and redraw every surface.
+  canvas.addEventListener("webglcontextlost", (event) => {
+    event.preventDefault();
+    if (renderer && renderer !== "failed") renderer.lost = true;
+    textures.clear();
+    for (const surface of surfaces) surface.lose();
+  });
+  canvas.addEventListener("webglcontextrestored", () => {
+    if (!renderer || renderer === "failed") return;
+    renderer.lost = false;
+    renderer.programs.clear();
+    setupContext(renderer.gl);
+    for (const surface of surfaces) surface.restore();
+  });
+  renderer = { gl, canvas, programs: new Map(), lost: false };
+  return renderer;
+}
+
+function setupContext(gl: WebGL2RenderingContext): void {
   gl.enable(gl.BLEND);
   gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
   gl.enable(gl.SCISSOR_TEST);
@@ -159,8 +181,6 @@ function getRenderer(): OrderedRenderer | undefined {
   gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 1, -1, -1, 1, -1, 1, 1, -1, 1, 1]), gl.STATIC_DRAW);
   gl.enableVertexAttribArray(0);
   gl.vertexAttribPointer(0, 2, gl.FLOAT, false, 0, 0);
-  renderer = { gl, canvas, programs: new Map() };
-  return renderer;
 }
 
 /** Compile and cache one program per effect, with the shared and `p_*` uniform locations. */
@@ -198,14 +218,18 @@ export function defineOrderedDither(): void {
 
 /**
  * One ordered-dither canvas. Draws once, and again when the box resizes. Speed above 0 runs a frame loop.
+ * Changing `data-dither` updates the surface in place: the clock keeps running, so sliders do not restart the motion.
  * With `bloom` above 0 a blurred copy of each frame sits on top in screen blend, so lit cells bloom.
  * The bloom reads `--dither-bloom` (strength) and `--dither-bloom-radius` (blur) from CSS, so pages can
  * change it on hover or with a transition.
  */
 class DitherSurface extends HTMLElement {
+  static observedAttributes = ["data-dither"];
+
   private canvas: HTMLCanvasElement | undefined;
   private ctx2d: CanvasRenderingContext2D | undefined;
   private bloomCtx: CanvasRenderingContext2D | undefined;
+  private textureSrc = "";
   private texture: WebGLTexture | undefined;
   private resizeObserver: ResizeObserver | undefined;
   private intersectionObserver: IntersectionObserver | undefined;
@@ -216,17 +240,12 @@ class DitherSurface extends HTMLElement {
   private clock = 0;
   private lastTick = 0;
   private readySent = false;
-  private glCanvas: HTMLCanvasElement | undefined;
-  private connection = 0;
+  private sizeKey = "";
+  private request = 0;
 
   connectedCallback(): void {
-    const connection = ++this.connection;
-    const settings = parseOrderedDither(this.dataset.dither);
-    this.settings = settings;
-    this.removeAttribute("data-dither-fallback");
-    this.removeAttribute("data-dither-ready");
-    this.style.removeProperty("background");
-    this.bloomCtx = undefined;
+    surfaces.add(this);
+    this.clock = 0;
     this.readySent = false;
     const canvas = document.createElement("canvas");
     // The canvas is sized in whole cells, so it can overhang the host by part of one; draw()
@@ -234,20 +253,15 @@ class DitherSurface extends HTMLElement {
     canvas.style.cssText = "position:absolute;left:0;top:0;display:block;image-rendering:pixelated";
     if (getComputedStyle(this).position === "static") this.style.position = "relative";
     this.canvas = canvas;
+    this.bloomCtx = undefined;
+    this.sizeKey = "";
     this.replaceChildren(canvas);
     this.ctx2d = canvas.getContext("2d") ?? undefined;
-    if (this.ctx2d === undefined || getRenderer() === undefined || getProgram(settings.effect) === undefined) {
-      this.showFallback();
-      return;
-    }
-    this.glCanvas = getRenderer()?.canvas;
-    this.glCanvas?.addEventListener("webglcontextlost", this.onContextLost);
-    if (settings.bloom > 0) this.bloomCtx = this.createBloom(settings);
 
     this.resizeObserver = new ResizeObserver(() => this.draw());
     this.resizeObserver.observe(this);
     this.intersectionObserver = new IntersectionObserver((entries) => {
-      this.inViewport = entries[0]?.isIntersecting ?? true;
+      this.inViewport = entries[entries.length - 1]?.isIntersecting ?? true;
       this.updatePlayback();
     });
     this.intersectionObserver.observe(this);
@@ -255,51 +269,89 @@ class DitherSurface extends HTMLElement {
     this.reducedMotion.addEventListener("change", this.onPreferenceChange);
     document.addEventListener("visibilitychange", this.onPreferenceChange);
 
-    const def: EffectDefinition = effects[settings.effect];
-    if (def.usesImage === true && settings.src !== "") {
-      const image = new Image();
-      image.onload = () => {
-        if (!this.isConnected || connection !== this.connection) return;
-        const shared = getRenderer();
-        try {
-          if (shared) this.texture = createTexture(shared.gl, image);
-        } catch {
-          this.showFallback();
-          return;
-        }
-        if (!this.texture) {
-          this.showFallback();
-          return;
-        }
-        this.draw();
-        this.updatePlayback();
-      };
-      image.onerror = () => {
-        if (this.isConnected && connection === this.connection) this.showFallback();
-      };
-      image.src = settings.src;
-      return;
-    }
-    if (def.usesImage === true) {
-      this.showFallback();
-      return;
-    }
-    this.draw();
-    this.updatePlayback();
+    this.applySettings();
   }
 
   disconnectedCallback(): void {
-    this.connection++;
+    surfaces.delete(this);
+    this.request++;
     this.pause();
     this.resizeObserver?.disconnect();
     this.intersectionObserver?.disconnect();
     this.reducedMotion?.removeEventListener("change", this.onPreferenceChange);
     document.removeEventListener("visibilitychange", this.onPreferenceChange);
-    if (renderer !== undefined && renderer !== "failed" && this.texture) {
-      renderer.gl.deleteTexture(this.texture);
-    }
+    this.releaseTexture();
+  }
+
+  attributeChangedCallback(_name: string, before: string | null, after: string | null): void {
+    if (this.canvas === undefined || !this.isConnected || before === after) return;
+    this.applySettings();
+  }
+
+  /** Called for every surface when the shared context comes back. */
+  restore(): void {
     this.texture = undefined;
-    this.glCanvas?.removeEventListener("webglcontextlost", this.onContextLost);
+    this.textureSrc = "";
+    if (this.isConnected && this.canvas) this.applySettings();
+  }
+
+  /** Called for every surface when the shared context is lost. */
+  lose(): void {
+    this.request++;
+    this.texture = undefined;
+    this.textureSrc = "";
+    this.showFallback();
+  }
+
+  /** Read `data-dither` and bring the surface in line with it. Safe to call at any time. */
+  private applySettings(): void {
+    const request = ++this.request;
+    const settings = parseOrderedDither(this.dataset.dither);
+    this.settings = settings;
+    this.clearFallback();
+    if (this.ctx2d === undefined || getRenderer() === undefined || getProgram(settings.effect) === undefined) {
+      this.showFallback();
+      return;
+    }
+    this.syncBloom(settings);
+
+    const def: EffectDefinition = effects[settings.effect];
+    if (def.usesImage !== true) {
+      this.releaseTexture();
+      this.draw();
+      this.updatePlayback();
+      return;
+    }
+    if (settings.src === "") {
+      this.showFallback();
+      return;
+    }
+    if (settings.src === this.textureSrc && this.texture) {
+      this.draw();
+      this.updatePlayback();
+      return;
+    }
+    this.releaseTexture();
+    void acquireTexture(settings.src).then((texture) => {
+      if (request !== this.request || !this.isConnected) {
+        if (texture) releaseTexture(settings.src);
+        return;
+      }
+      if (!texture) {
+        this.showFallback();
+        return;
+      }
+      this.texture = texture;
+      this.textureSrc = settings.src;
+      this.draw();
+      this.updatePlayback();
+    });
+  }
+
+  private releaseTexture(): void {
+    if (this.textureSrc !== "") releaseTexture(this.textureSrc);
+    this.texture = undefined;
+    this.textureSrc = "";
   }
 
   /** Keep a visible palette preview when WebGL or the globe texture cannot draw. */
@@ -319,15 +371,29 @@ class DitherSurface extends HTMLElement {
     this.removeAttribute("data-dither-ready");
   }
 
-  private onContextLost = (): void => {
-    renderer = "failed";
-    this.showFallback();
-  };
+  private clearFallback(): void {
+    if (!this.hasAttribute("data-dither-fallback")) return;
+    this.removeAttribute("data-dither-fallback");
+    this.style.removeProperty("background");
+    if (this.canvas) this.canvas.style.display = "block";
+    if (this.bloomCtx) this.bloomCtx.canvas.style.display = "block";
+  }
 
   /** The bloom layer: a half-resolution copy, smoothly scaled, blurred and screened over the dither. */
-  private createBloom(settings: OrderedDitherSettings): CanvasRenderingContext2D | undefined {
-    const glow = document.createElement("canvas");
-    glow.setAttribute("data-dither-bloom", "");
+  private syncBloom(settings: OrderedDitherSettings): void {
+    if (settings.bloom <= 0) {
+      this.bloomCtx?.canvas.remove();
+      this.bloomCtx = undefined;
+      return;
+    }
+    let glow = this.bloomCtx?.canvas;
+    if (!glow) {
+      glow = document.createElement("canvas");
+      glow.setAttribute("data-dither-bloom", "");
+      this.append(glow);
+      this.bloomCtx = glow.getContext("2d") ?? undefined;
+      this.sizeKey = "";
+    }
     glow.style.cssText = [
       "position:absolute",
       "left:0",
@@ -338,9 +404,9 @@ class DitherSurface extends HTMLElement {
       `opacity:var(--dither-bloom, ${settings.bloom})`,
       `filter:blur(var(--dither-bloom-radius, ${settings.bloomRadius}px)) saturate(1.4)`,
       "transition:opacity 300ms ease",
+      `width:${this.canvas?.style.width ?? "100%"}`,
+      `height:${this.canvas?.style.height ?? "100%"}`,
     ].join(";");
-    this.append(glow);
-    return glow.getContext("2d") ?? undefined;
   }
 
   private draw(): void {
@@ -354,17 +420,21 @@ class DitherSurface extends HTMLElement {
     if (def.usesImage === true && this.texture === undefined) return;
     const entry = getProgram(settings.effect);
     if (entry === undefined) return;
+    // A box with no area (display:none, a closed dialog) has nothing to draw yet.
+    if (this.clientWidth === 0 || this.clientHeight === 0) return;
 
     // The shader output is flat inside each dither cell, so render one canvas
     // pixel per cell and let CSS scale it up with hard edges. That is cell² × dpr²
     // fewer pixels to shade and to copy out of the shared context.
     const dpr = Math.min(window.devicePixelRatio || 1, 2);
     const cellPx = Math.max(1, Math.round(settings.cell * dpr));
-    const width = Math.max(1, Math.ceil((this.clientWidth * dpr) / cellPx));
-    const height = Math.max(1, Math.ceil((this.clientHeight * dpr) / cellPx));
-    if (canvas.width !== width || canvas.height !== height) {
-      canvas.width = width;
-      canvas.height = height;
+    const width = Math.min(MAX_CELLS, Math.max(1, Math.ceil((this.clientWidth * dpr) / cellPx)));
+    const height = Math.min(MAX_CELLS, Math.max(1, Math.ceil((this.clientHeight * dpr) / cellPx)));
+    const sizeKey = `${width}x${height}x${cellPx}x${this.clientWidth}x${this.clientHeight}`;
+    if (sizeKey !== this.sizeKey) {
+      this.sizeKey = sizeKey;
+      if (canvas.width !== width) canvas.width = width;
+      if (canvas.height !== height) canvas.height = height;
       // Exact multiples of the cell keep every cell the same size; clip the overhang.
       const cssWidth = (width * cellPx) / dpr;
       const cssHeight = (height * cellPx) / dpr;
@@ -458,7 +528,8 @@ class DitherSurface extends HTMLElement {
 
   private tick = (now: number): void => {
     const speed = this.settings?.speed ?? 0;
-    this.clock += (Math.max(0, now - this.lastTick) / 1000) * speed;
+    // A long gap (a throttled tab, a debugger pause) advances one frame's worth, not the whole gap.
+    this.clock += (Math.min(Math.max(0, now - this.lastTick), 100) / 1000) * speed;
     this.lastTick = now;
     this.draw();
     this.rafId = requestAnimationFrame(this.tick);
@@ -467,6 +538,56 @@ class DitherSurface extends HTMLElement {
   private onPreferenceChange = (): void => {
     this.updatePlayback();
   };
+}
+
+const surfaces = new Set<DitherSurface>();
+
+/** Upper bound on cells per side, so a huge box cannot ask for a canvas the GPU refuses. */
+const MAX_CELLS = 4096;
+
+interface SharedTexture {
+  texture: Promise<WebGLTexture | undefined>;
+  users: number;
+}
+
+const textures = new Map<string, SharedTexture>();
+
+/** One texture per image URL, shared by every surface that samples it. */
+function acquireTexture(src: string): Promise<WebGLTexture | undefined> {
+  const cached = textures.get(src);
+  if (cached) {
+    cached.users++;
+    return cached.texture;
+  }
+  const texture = new Promise<WebGLTexture | undefined>((resolve) => {
+    const image = new Image();
+    image.crossOrigin = "anonymous";
+    image.onload = () => {
+      const shared = getRenderer();
+      try {
+        resolve(shared ? createTexture(shared.gl, image) : undefined);
+      } catch {
+        resolve(undefined);
+      }
+    };
+    image.onerror = () => resolve(undefined);
+    image.src = src;
+  });
+  textures.set(src, { texture, users: 1 });
+  // A failed load is not cached, so a later surface can try again.
+  void texture.then((value) => {
+    if (value === undefined) textures.delete(src);
+  });
+  return texture;
+}
+
+function releaseTexture(src: string): void {
+  const cached = textures.get(src);
+  if (!cached || --cached.users > 0) return;
+  textures.delete(src);
+  void cached.texture.then((texture) => {
+    if (texture && renderer !== undefined && renderer !== "failed") renderer.gl.deleteTexture(texture);
+  });
 }
 
 function matrixNumber(matrix: DitherMatrix): number {

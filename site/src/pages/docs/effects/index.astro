@@ -1,7 +1,7 @@
 ---
 import DocsLayout from "../../../layouts/DocsLayout.astro";
 import Card from "../../../components/starwind/card";
-import { DitherEffect, DitherGlobe } from "astro-dither";
+import { DitherEffect } from "astro-dither";
 import { EFFECTS, EFFECT_GROUP_ORDER } from "../../../docs/registry";
 const toc = EFFECT_GROUP_ORDER.map((text) => ({ text, depth: 2, slug: text.toLowerCase().replaceAll(" ", "-") }));
 ---
@@ -22,11 +22,7 @@ const toc = EFFECT_GROUP_ORDER.map((text) => ({ text, depth: 2, slug: text.toLow
             <a class="cat-link" href={`/docs/effects/${e.slug}`}>
               <Card.Root class="cat-card">
                 <span class="cat-vis">
-                  {e.slug === "globe" ? (
-                    <DitherGlobe />
-                  ) : (
-                    <DitherEffect effect={e.slug} />
-                  )}
+                  <DitherEffect effect={e.slug} />
                 </span>
                 <span class="cat-cap">
                   <span class="cat-name">{e.title}</span>
@@ -44,13 +40,15 @@ const toc = EFFECT_GROUP_ORDER.map((text) => ({ text, depth: 2, slug: text.toLow
 <style>
   .catalog {
     display: grid;
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
     gap: 16px;
     margin-bottom: 32px;
   }
-  .cat-link {
+  .catalog .cat-link {
     display: block;
+    color: inherit;
     text-decoration: none;
+    border-radius: 14px;
   }
   .cat-card {
     padding: 0;
@@ -59,8 +57,12 @@ const toc = EFFECT_GROUP_ORDER.map((text) => ({ text, depth: 2, slug: text.toLow
     overflow: hidden;
     transition: border-color var(--t-hover) ease;
   }
-  .cat-link:hover .cat-card {
-    border-color: #262a31;
+  .cat-link:hover .cat-card,
+  .cat-link:focus-visible .cat-card {
+    border-color: #3a404a;
+  }
+  .cat-card {
+    height: 100%;
   }
   .cat-vis {
     position: relative;
@@ -92,9 +94,13 @@ const toc = EFFECT_GROUP_ORDER.map((text) => ({ text, depth: 2, slug: text.toLow
     font-size: 12px;
     color: var(--muted);
   }
-  @media (max-width: 640px) {
+  @media (max-width: 480px) {
     .catalog {
-      grid-template-columns: 1fr;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 10px;
+    }
+    .cat-desc {
+      display: none;
     }
   }
 </style>

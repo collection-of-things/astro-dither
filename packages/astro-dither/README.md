@@ -96,7 +96,7 @@ Remote images need CORS headers because the shader reads their pixels.
 
 ![Six registry effects rendered with their default settings](https://raw.githubusercontent.com/screen-gd/astro-dither/main/assets/readme/effects.jpg)
 
-One component for the 18 procedural registry effects. Use `DitherGlobe` for the nineteenth effect: it supplies the required land mask, which `DitherEffect` does not accept. Each effect is a small GLSL field mapped onto a dithered palette ramp. The element fills its parent.
+One component for all 19 registry effects. The globe samples a land mask: `DitherEffect` uses the bundled one unless you pass `src`, and `DitherGlobe` wraps it with typed `lat`, `lon` and `sea` props. Each effect is a small GLSL field mapped onto a dithered palette ramp. The element fills its parent.
 
 ```astro
 ---

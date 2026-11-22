@@ -159,14 +159,15 @@ const socialImageAlt = "Dither. For Astro. Blue dithered aurora with animated ba
 
   /* Section entrances: parts rise with opacity as their section scrolls in.
      Without js nothing is hidden. */
-  .js [data-enter] {
+  /* Gated on a class the observer script sets itself, so content never stays hidden if that script fails to run. */
+  .enter-on [data-enter] {
     opacity: 0;
     transform: translateY(24px);
     transition:
       opacity 700ms var(--ease-expo) calc(var(--i, 0) * 80ms),
       transform 700ms var(--ease-expo) calc(var(--i, 0) * 80ms);
   }
-  .js [data-enter].is-in {
+  .enter-on [data-enter].is-in {
     opacity: 1;
     transform: none;
   }
@@ -210,7 +211,7 @@ const socialImageAlt = "Dither. For Astro. Blue dithered aurora with animated ba
       transform: none;
       opacity: 1;
     }
-    .js [data-enter] {
+    .enter-on [data-enter] {
       transition: none;
       opacity: 1;
       transform: none;
