@@ -229,7 +229,7 @@ class DitherSurface extends HTMLElement {
   private canvas: HTMLCanvasElement | undefined;
   private ctx2d: CanvasRenderingContext2D | undefined;
   private bloomCtx: CanvasRenderingContext2D | undefined;
-  private textureSrc = "";
+  private textureEntry: SharedTexture | undefined;
   private texture: WebGLTexture | undefined;
   private resizeObserver: ResizeObserver | undefined;
   private intersectionObserver: IntersectionObserver | undefined;
@@ -291,7 +291,7 @@ class DitherSurface extends HTMLElement {
   /** Called for every surface when the shared context comes back. */
   restore(): void {
     this.texture = undefined;
-    this.textureSrc = "";
+    this.textureEntry = undefined;
     if (this.isConnected && this.canvas) this.applySettings();
   }
 
@@ -299,7 +299,7 @@ class DitherSurface extends HTMLElement {
   lose(): void {
     this.request++;
     this.texture = undefined;
-    this.textureSrc = "";
+    this.textureEntry = undefined;
     this.showFallback();
   }
 
@@ -326,32 +326,34 @@ class DitherSurface extends HTMLElement {
       this.showFallback();
       return;
     }
-    if (settings.src === this.textureSrc && this.texture) {
+    if (settings.src === this.textureEntry?.src && this.texture) {
       this.draw();
       this.updatePlayback();
       return;
     }
     this.releaseTexture();
-    void acquireTexture(settings.src).then((texture) => {
+    const entry = acquireTexture(settings.src);
+    void entry.texture.then((texture) => {
       if (request !== this.request || !this.isConnected) {
-        if (texture) releaseTexture(settings.src);
+        releaseTexture(entry);
         return;
       }
       if (!texture) {
+        releaseTexture(entry);
         this.showFallback();
         return;
       }
       this.texture = texture;
-      this.textureSrc = settings.src;
+      this.textureEntry = entry;
       this.draw();
       this.updatePlayback();
     });
   }
 
   private releaseTexture(): void {
-    if (this.textureSrc !== "") releaseTexture(this.textureSrc);
+    if (this.textureEntry) releaseTexture(this.textureEntry);
     this.texture = undefined;
-    this.textureSrc = "";
+    this.textureEntry = undefined;
   }
 
   /** Keep a visible palette preview when WebGL or the globe texture cannot draw. */
@@ -369,6 +371,8 @@ class DitherSurface extends HTMLElement {
     if (this.bloomCtx) this.bloomCtx.canvas.style.display = "none";
     this.setAttribute("data-dither-fallback", "");
     this.removeAttribute("data-dither-ready");
+    // The next successful draw announces readiness again.
+    this.readySent = false;
   }
 
   private clearFallback(): void {
@@ -546,18 +550,22 @@ const surfaces = new Set<DitherSurface>();
 const MAX_CELLS = 4096;
 
 interface SharedTexture {
+  src: string;
   texture: Promise<WebGLTexture | undefined>;
   users: number;
 }
 
 const textures = new Map<string, SharedTexture>();
 
-/** One texture per image URL, shared by every surface that samples it. */
-function acquireTexture(src: string): Promise<WebGLTexture | undefined> {
+/**
+ * One texture per image URL, shared by every surface that samples it. Callers hold the entry and
+ * hand it back to releaseTexture, so a load that outlives a context loss cannot release its replacement.
+ */
+function acquireTexture(src: string): SharedTexture {
   const cached = textures.get(src);
   if (cached) {
     cached.users++;
-    return cached.texture;
+    return cached;
   }
   const texture = new Promise<WebGLTexture | undefined>((resolve) => {
     const image = new Image();
@@ -573,19 +581,21 @@ function acquireTexture(src: string): Promise<WebGLTexture | undefined> {
     image.onerror = () => resolve(undefined);
     image.src = src;
   });
-  textures.set(src, { texture, users: 1 });
+  const entry: SharedTexture = { src, texture, users: 1 };
+  textures.set(src, entry);
   // A failed load is not cached, so a later surface can try again.
   void texture.then((value) => {
-    if (value === undefined) textures.delete(src);
+    if (value === undefined && textures.get(src) === entry) textures.delete(src);
   });
-  return texture;
+  return entry;
 }
 
-function releaseTexture(src: string): void {
-  const cached = textures.get(src);
-  if (!cached || --cached.users > 0) return;
-  textures.delete(src);
-  void cached.texture.then((texture) => {
+function releaseTexture(entry: SharedTexture): void {
+  if (--entry.users > 0) return;
+  // An entry dropped by a context loss is no longer in the map, and its texture died with that context.
+  if (textures.get(entry.src) !== entry) return;
+  textures.delete(entry.src);
+  void entry.texture.then((texture) => {
     if (texture && renderer !== undefined && renderer !== "failed") renderer.gl.deleteTexture(texture);
   });
 }
