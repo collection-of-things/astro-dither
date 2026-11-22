@@ -34,9 +34,12 @@ class DitherImage extends HTMLElement {
     }
     const settings = parseImageDitherSettings(this.dataset.dither);
     shader.setUniforms(imageDitherUniforms(settings, img));
-    shader.setSpeed(playbackSpeed(settings.speed, this.reducedMotion.matches));
+    const speed = playbackSpeed(settings.speed, this.reducedMotion.matches);
+    shader.setSpeed(speed);
     shader.setMinPixelRatio(settings.minPixelRatio);
     shader.setMaxPixelCount(settings.maxPixelCount);
+    // A still image shows exactly the requested frame; a moving one keeps its clock.
+    if (speed === 0) shader.setFrame(settings.frame);
   }
 
   connectedCallback(): void {
