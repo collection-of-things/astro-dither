@@ -4,6 +4,12 @@
 
 - Show palette gradients when WebGL initialization or a context fails; retain full-size image fallbacks when Paper cannot draw.
 - Clarify that the CLI image component uses Paper's image dithering filter.
+- Every dither element updates in place when its `data-dither` attribute changes. The motion keeps its clock instead of restarting. Ordered surfaces use the exact `stillTime` when playback stops or reduced motion is enabled.
+- `<dither-surface>` redraws after the shared WebGL context is lost and restored, ignoring image loads from the lost context. `Dither` and `DitherImage` mount again when the tab becomes visible after a lost context.
+- Surfaces keep filling their parent at the 4096-cell limit by increasing cell size.
+- `DitherEffect` takes `src` and uses the bundled land mask for `effect="globe"`, which used to fall back to a gradient.
+- Ordered effects use high float precision, which fixes broken noise on GPUs with a real medium precision. Surfaces that sample the same image share one texture.
+- Redrawn `aurora`, `waves`, `eclipse`, `metaballs` and `beams` fields. Their params are unchanged.
 
 ## 0.1.0 - 2026-11-04
 

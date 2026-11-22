@@ -1,6 +1,7 @@
 ---
 import { orderedDitherAttribute } from "../lib/ordered-dither";
-import type { EffectName, EffectParams } from "../lib/effects";
+import { effects, type EffectDefinition, type EffectName, type EffectParams } from "../lib/effects";
+import land from "../assets/land.png";
 
 interface Props<E extends EffectName = EffectName> {
   effect: E;
@@ -18,11 +19,15 @@ interface Props<E extends EffectName = EffectName> {
   bloom?: number;
   /** Bloom blur in CSS pixels. CSS `--dither-bloom-radius` overrides it. */
   bloomRadius?: number;
+  /** Image for effects that sample one (globe). Defaults to the bundled land mask. */
+  src?: string | { src: string };
   class?: string;
 }
 
-const { class: className, effect, params, palette, cell, matrix, speed, levels, stillTime, bloom, bloomRadius } = Astro.props;
-const encoded = orderedDitherAttribute({ effect, params, palette, cell, matrix, speed, levels, stillTime, bloom, bloomRadius });
+const { class: className, effect, params, palette, cell, matrix, speed, levels, stillTime, bloom, bloomRadius, src } = Astro.props;
+const definition: EffectDefinition = effects[effect];
+const image = definition.usesImage === true ? (typeof src === "string" ? src : (src ?? land).src) : undefined;
+const encoded = orderedDitherAttribute({ effect, params, palette, cell, matrix, speed, levels, stillTime, bloom, bloomRadius, src: image });
 ---
 
 <dither-surface class={className} data-dither={encoded} aria-hidden="true"></dither-surface>

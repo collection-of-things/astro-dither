@@ -1,4 +1,12 @@
-/** Rebuild a dither element in place so it remounts with new settings. */
+/** Update the host's dither element in place when the tag matches, so sliders do not restart the motion. */
+export function update(host: Element | null, tag: string, data: Record<string, unknown>, innerHTML = ""): Element | undefined {
+  const current = host?.querySelector(`:scope > ${tag}`);
+  if (!current) return remount(host, tag, data, innerHTML);
+  current.setAttribute("data-dither", JSON.stringify(data));
+  return current;
+}
+
+/** Rebuild a dither element so it remounts with new settings and restarts its clock. */
 export function remount(host: Element | null, tag: string, data: Record<string, unknown>, innerHTML = ""): Element | undefined {
   if (!(host instanceof HTMLElement)) return undefined;
   const el = document.createElement(tag);

@@ -503,6 +503,13 @@ const mdPath = md ?? `${href === "/docs" ? "/docs" : href}.md`;
       flex: none;
       color: var(--muted);
     }
+    .doc-head {
+      flex-direction: column-reverse;
+      gap: 12px;
+    }
+    .doc-actions {
+      padding-top: 0;
+    }
     :global(.docs-drawer) {
       width: 260px;
       padding: 0;

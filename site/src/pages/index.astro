@@ -106,14 +106,15 @@ const FOOTER_RISE = {
         color="#3d8bff"
         tipColor="#6a4cff"
         background="transparent"
-        height={0.66}
+        height={0.1}
         curtains={3}
-        spread={0.08}
+        spread={0.07}
         rays={9}
-        length={0.5}
-        sway={1.1}
+        length={0.36}
+        sway={1.2}
         glow={1}
-        intensity={0.7}
+        intensity={0.8}
+        mask="top"
         cell={3}
         bloom={0.55}
         bloomRadius={14}
@@ -383,7 +384,16 @@ const FOOTER_RISE = {
     .hero-inner {
       position: relative;
       z-index: 2;
-      padding: 0 var(--margin);
+      padding: 0 var(--margin) 12svh;
+    }
+    /* A soft dark pool behind the copy keeps it readable over the lit curtains. */
+    .hero-inner::before {
+      content: "";
+      position: absolute;
+      inset: -18% -12%;
+      z-index: -1;
+      background: radial-gradient(closest-side, rgba(0, 0, 0, 0.72), rgba(0, 0, 0, 0.45) 55%, transparent);
+      pointer-events: none;
     }
     .hero:has(:global(dither-surface[data-dither-fallback]))::after {
       content: "";
@@ -519,9 +529,17 @@ const FOOTER_RISE = {
       height: 100%;
       margin: 0;
     }
+    .usage-code :global(.expressive-code figure) {
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+    }
+    .usage-code :global(.expressive-code pre) {
+      flex: 1;
+    }
     .usage-live {
       position: relative;
-      aspect-ratio: 4 / 3;
+      aspect-ratio: 16 / 9;
       padding: 0;
       gap: 0;
       overflow: hidden;
@@ -1044,6 +1062,7 @@ const FOOTER_RISE = {
       },
       { threshold: 0.15 },
     );
+    document.documentElement.classList.add("enter-on");
     document.querySelectorAll("[data-enter]").forEach((el) => io.observe(el));
   </script>
 </Base>

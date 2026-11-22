@@ -88,16 +88,19 @@ float field(vec2 uv, vec2 res, float t) {
     float fi = float(i);
     if (fi >= n) break;
     float k = fi / max(n - 1.0, 1.0);
-    float fold = (fbm(vec2(x * 1.4 + fi * 4.7, t * 0.05 + fi * 1.3)) - 0.5) * 0.7 * p_sway;
+    float fold = (fbm(vec2(x * 1.4 + fi * 4.7, t * 0.05 + fi * 1.3)) - 0.5) * 0.45 * p_sway;
     float ripple = (vnoise(vec2(x * 7.0 + fi * 11.0, t * 0.25)) - 0.5) * 0.025 * p_turbulence;
     float edge = p_height + fi * p_spread + fold + ripple;
     float d = p.y - edge;
-    float ray = pow(vnoise(vec2(x * p_rays * 5.0 + fold * 18.0 + fi * 17.0, p.y * 1.4 - t * 0.12)), 3.0);
+    float fine = vnoise(vec2(x * p_rays * 5.0 + fold * 18.0 + fi * 17.0, p.y * 1.4 - t * 0.12));
+    float broad = vnoise(vec2(x * p_rays * 1.3 + fold * 6.0 + fi * 5.0, t * 0.08));
+    float ray = pow(fine, 1.5) * (0.3 + 0.7 * broad);
     float rise = step(0.0, d) * exp(-max(d, 0.0) * 2.5 / max(p_length * mix(1.0, 0.6, k), 0.02));
-    float line = exp(-abs(d) * 110.0) * p_glow;
+    // A soft lower hem instead of a hairline, so the curtain reads as a sheet of light.
+    float line = exp(-abs(d) * 26.0) * 0.3 * p_glow;
     float under = step(0.0, -d) * exp(d * 40.0) * 0.25;
     float shimmer = 1.0 - p_shimmer + p_shimmer * vnoise(vec2(x * 1.5 - t * 0.3, fi * 3.0));
-    tone += (rise * (0.15 + 0.85 * ray) * 0.6 + line + under) * shimmer * (1.0 - 0.55 * k);
+    tone += (rise * (0.3 + 0.9 * ray) * 1.15 + line + under) * shimmer * (1.0 - 0.55 * k);
   }
   tone = 1.0 - exp(-tone * 2.2 * p_intensity);
   float m = 1.0;
@@ -121,15 +124,23 @@ const WAVES_FIELD = /* glsl */ `
 float field(vec2 uv, vec2 res, float t) {
   float aspect = res.x / res.y;
   float x = uv.x * aspect;
-  float glow = exp(-abs(uv.y - p_horizon) * 5.0) * 0.4;
-  float tone = glow;
-  for (int i = 0; i < 3; i++) {
+  // Sky: a glow that sits on the horizon and fades upward.
+  float tone = exp(-max(uv.y - p_horizon, 0.0) * 6.0) * 0.55;
+  // Five swells, drawn far to near. Each is lit along its crest and falls into shadow below it.
+  for (int i = 0; i < 5; i++) {
     float fi = float(i);
-    float level = p_horizon - 0.08 - 0.16 * fi;
-    float edge = level + 0.04 * sin(x * (3.0 + fi * 2.0) - t * (0.4 + 0.15 * fi)) + 0.05 * (fbm(vec2(x * 3.0 - t * 0.15, fi * 9.0)) - 0.5);
-    float band = smoothstep(-0.06, 0.0, uv.y - edge) * (0.5 + 0.15 * fi);
-    float crest = smoothstep(0.018, 0.0, abs(uv.y - edge)) * (0.7 + 0.1 * fi);
-    tone = max(tone, max(band, crest) * smoothstep(p_horizon + 0.05, p_horizon - 0.1, uv.y));
+    float k = fi / 4.0;
+    float level = p_horizon - 0.02 - p_horizon * 0.2 * fi;
+    float amp = 0.012 + 0.03 * k;
+    float edge = level
+      + amp * sin(x * (7.0 - 4.0 * k) + fi * 1.9 - t * (0.35 + 0.3 * k))
+      + amp * 1.4 * (fbm(vec2(x * (4.0 - 2.0 * k) - t * (0.1 + 0.1 * k), fi * 9.0)) - 0.5);
+    float depth = edge - uv.y;
+    if (depth > 0.0) {
+      float crest = exp(-depth * mix(60.0, 22.0, k));
+      float body = exp(-depth * mix(14.0, 5.0, k)) * 0.35;
+      tone = mix(0.05 + 0.06 * k, 1.0, crest * (0.75 + 0.25 * k)) + body;
+    }
   }
   return clamp(tone * p_gain, 0.0, 1.0);
 }
@@ -169,7 +180,7 @@ float field(vec2 uv, vec2 res, float t) {
   float cone = smoothstep(1.9, 0.7, abs(a));
   float streak = pow(vnoise(vec2(a * 7.0 + t * 0.11, 3.0)), 2.0) * 0.65 + pow(vnoise(vec2(a * 15.0 - t * 0.07, 9.0)), 2.0) * 0.35;
   float core = exp(-abs(d.x) * 6.0) * 0.4;
-  return clamp((0.25 + 0.75 * streak) * cone * exp(-dist * p_fade) + core * cone, 0.0, 1.0);
+  return clamp((0.3 + 1.1 * streak) * cone * exp(-dist * p_fade) * 1.6 + core * cone, 0.0, 1.0);
 }
 `;
 
@@ -224,13 +235,20 @@ float field(vec2 uv, vec2 res, float t) {
   float aspect = res.x / res.y;
   vec2 p = vec2(uv.x * aspect, uv.y);
   float s = 0.0;
-  for (int i = 0; i < 4; i++) {
+  for (int i = 0; i < 5; i++) {
     float fi = float(i);
-    vec2 c = vec2(aspect * 0.5 + 0.26 * sin(t * (0.30 + 0.13 * fi) + fi * 2.3), 0.5 + 0.25 * cos(t * (0.23 + 0.11 * fi) + fi * 1.7));
+    vec2 c = vec2(
+      aspect * 0.5 + aspect * 0.26 * sin(t * (0.30 + 0.13 * fi) + fi * 2.3),
+      0.5 + 0.27 * cos(t * (0.23 + 0.11 * fi) + fi * 1.7)
+    );
+    float r = p_size * (0.7 + 0.15 * fi);
     vec2 d = p - c;
-    s += p_size * p_size / (dot(d, d) + 0.0008);
+    s += r * r / (dot(d, d) + 0.0008);
   }
-  return clamp(smoothstep(0.9, 1.7, s) + 0.12 * smoothstep(0.4, 0.9, s), 0.0, 1.0);
+  // A soft halo, a firm edge, then a core that brightens where blobs overlap.
+  float halo = 0.22 * smoothstep(0.35, 1.0, s);
+  float body = smoothstep(0.95, 1.25, s) * (0.45 + 0.55 * smoothstep(1.0, 3.5, s));
+  return clamp(halo + body, 0.0, 1.0);
 }
 `;
 
@@ -300,13 +318,21 @@ float field(vec2 uv, vec2 res, float t) {
 const ECLIPSE_FIELD = /* glsl */ `
 float field(vec2 uv, vec2 res, float t) {
   float aspect = res.x / res.y;
-  vec2 p = vec2(uv.x * aspect, uv.y) - vec2(aspect * 0.5, 0.55);
+  vec2 p = vec2(uv.x * aspect, uv.y) - vec2(aspect * 0.5, 0.52);
   float d = length(p);
   float a = atan(p.y, p.x);
-  float rim = exp(-abs(d - p_radius) * 12.0);
-  float corona = exp(-max(d - p_radius, 0.0) * 3.5) * (0.5 + 0.3 * sin(t * 0.7)) * (0.5 + 0.5 * vnoise(vec2(a * 4.0 + t * 0.15, 3.0)));
-  float disc = smoothstep(p_radius, p_radius - 0.015, d) * 0.04;
-  return clamp(disc + rim + corona, 0.0, 1.0);
+  float away = max(d - p_radius, 0.0) / p_radius;
+  // Streamers: angular noise sampled on a circle, so there is no seam at ±PI.
+  vec2 ring = vec2(cos(a), sin(a));
+  float streamers = 0.45 + 0.55 * fbm(ring * 2.4 + vec2(t * 0.05, -t * 0.04));
+  float fine = vnoise(ring * 9.0 + vec2(-t * 0.08, t * 0.06));
+  float breathe = 0.85 + 0.15 * sin(t * 0.7);
+  float corona = exp(-away * mix(0.7, 2.6, 1.0 - streamers)) * (0.55 + 0.45 * streamers + 0.2 * fine) * breathe;
+  float rim = exp(-away * 14.0);
+  // The moon stays dark, with a faint limb so the disc reads on a black page.
+  float moon = smoothstep(p_radius, p_radius - 0.006, d);
+  float limb = 0.05 * smoothstep(p_radius * 0.75, p_radius, d);
+  return clamp(mix(rim + corona, limb, moon), 0.0, 1.0);
 }
 `;
 
